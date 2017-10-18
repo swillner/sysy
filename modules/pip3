@@ -1,0 +1,22 @@
+# -*- mode: sh; -*-
+
+command=$1
+shift
+
+case "$command" in
+    desc)
+        echo
+        ;;
+    install)
+        pip3 -q install --user $@
+        ;;
+    sync)
+        pip3 -q install --user $@
+        ;;
+    uninstall)
+        pip3 -q uninstall --user $@
+        ;;
+    update)
+        pip3 -q install --user --upgrade $@
+        ;;
+esac

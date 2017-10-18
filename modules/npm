@@ -1,0 +1,22 @@
+# -*- mode: sh; -*-
+
+command=$1
+shift
+
+case "$command" in
+    desc)
+        echo
+        ;;
+    install)
+        npm install -g $@
+        ;;
+    sync)
+        npm install -g $@
+        ;;
+    uninstall)
+        npm uninstall -g $@
+        ;;
+    update)
+        npm update $@
+        ;;
+esac

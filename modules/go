@@ -1,0 +1,22 @@
+# -*- mode: sh; -*-
+
+command=$1
+shift
+
+case "$command" in
+    desc)
+        echo
+        ;;
+    install)
+        go get $@
+        ;;
+    sync)
+        go get $@
+        ;;
+    uninstall)
+        go clean -i $@
+        ;;
+    update)
+        go get -u $@
+        ;;
+esac

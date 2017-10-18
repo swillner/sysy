@@ -1,0 +1,50 @@
+# -*- mode: sh; -*-
+
+command=$1
+shift
+
+case "$command" in
+    desc)
+        echo # TODO cargo show
+        ;;
+    install)
+        already_installed=$(cargo install --list)
+        for p in $@
+        do
+            if ! echo "$already_installed" | grep "^$p " >/dev/null
+            then
+                cargo install $p
+                if [ $? != 0 ]
+                then
+                    echo "Forgot sudo mount -o remount,exec /tmp ?"
+                    break
+                fi
+            fi
+        done
+        ;;
+    sync)
+        already_installed=$(cargo install --list)
+        for p in $@
+        do
+            if ! echo "$already_installed" | grep "^$p " >/dev/null
+            then
+                cargo install $p
+                if [ $? != 0 ]
+                then
+                    echo "Forgot sudo mount -o remount,exec /tmp ?"
+                    break
+                fi
+            fi
+        done
+        ;;
+    uninstall)
+        for p in $@
+        do
+            cargo uninstall $p
+        done
+        ;;
+    update)
+        echo "not implemented yet" 1>&2
+        exit 1
+        ;;
+esac

@@ -1,0 +1,105 @@
+#!/usr/bin/env bash
+pushd `dirname $0` > /dev/null
+scriptpath=`pwd`
+popd > /dev/null
+
+command=$1
+shift
+
+call_module () {
+    local module=$1
+    local command=$2
+    shift 2
+    local module_file=$scriptpath/modules/$module
+    if [ -e $module_file ]
+    then
+        . $module_file $command $@
+    else
+        echo "module $module not found" 1>&2
+        exit 2
+    fi
+}
+
+case "$command" in
+
+    install)
+        module=$1
+        shift
+        packages_file=$scriptpath/packages/$module
+        mkdir -p $scriptpath/packages
+        touch $packages_file
+        packages=$(cat $packages_file)
+        if call_module $module install $@
+        then
+            for p in $@
+            do
+                desc=$(call_module $module desc $p)
+                packages=$(echo -e "$packages\n$p # $desc" | sort | uniq)
+            done
+            echo "$packages" > $packages_file
+        fi
+        ;;
+
+    sync)
+        if [ -z "$1" ]
+        then
+            for module in $scriptpath/modules/*
+            do
+                module=$(basename $module)
+                packages_file=$scriptpath/packages/$module
+                mkdir -p $scriptpath/packages
+                touch $packages_file
+                packages=$(cat $packages_file | grep -v -e "^#" | cut -f1 -d' ')
+                if [ ! -z "$packages" ]
+                then
+                    call_module $module sync $packages
+                fi
+            done
+        else
+            module=$1
+            shift
+            packages_file=$scriptpath/packages/$module
+            mkdir -p $scriptpath/packages
+            touch $packages_file
+            packages=$(cat $packages_file | grep -v -e "^#" | cut -f1 -d' ')
+            if [ ! -z "$packages" ]
+            then
+                call_module $module sync $packages
+            fi
+        fi
+        ;;
+
+    uninstall)
+        module=$1
+        shift
+        call_module $module uninstall $@
+        packages_file=$scriptpath/packages/$module
+        mkdir -p $scriptpath/packages
+        touch $packages_file
+        packages=$(cat $packages_file)
+        for p in $@
+        do
+            packages=$(echo "$packages" | grep -v -e "^$p #")
+        done
+        echo "$packages" > $packages_file
+        ;;
+
+    *)
+        cat <<EOF
+pasy - package synchronization
+
+Usage:
+
+    pasy command [arguments]
+
+Commands:
+
+    install     install packages
+    sync        synchronize
+    uninstall   uninstall packages
+
+EOF
+        exit 1
+        ;;
+
+esac
