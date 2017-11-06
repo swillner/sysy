@@ -12,7 +12,7 @@ case "$command" in
         already_installed=$(cabal list --installed)
         for p in $@
         do
-            if ! echo "$already_installed" | grep "^* $p " >/dev/null
+            if ! echo "$already_installed" | grep "^* $p$" >/dev/null
             then
                 TMPDIR=$XDG_RUNTIME_DIR cabal install $p
                 if [ $? != 0 ]
@@ -23,10 +23,10 @@ case "$command" in
         done
         ;;
     sync)
-        already_installed=$(cargo install --list)
+        already_installed=$(cabal list --installed)
         for p in $@
         do
-            if ! echo "$already_installed" | grep "^* $p " >/dev/null
+            if ! echo "$already_installed" | grep "^* $p$" >/dev/null
             then
                 TMPDIR=$XDG_RUNTIME_DIR cabal install $p
                 if [ $? != 0 ]
