@@ -11,7 +11,13 @@ case "$command" in
         npm install -g $@
         ;;
     sync)
-        npm install -g $@
+        for p in $@
+        do
+            if ! npm list -g $p >/dev/null 2>/dev/null
+            then
+                npm install -g $p
+            fi
+        done
         ;;
     uninstall)
         npm uninstall -g $@
