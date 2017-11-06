@@ -13,10 +13,9 @@ case "$command" in
         do
             if ! echo "$already_installed" | grep "^$p " >/dev/null
             then
-                cargo install $p
+                TMPDIR=$XDG_RUNTIME_DIR cargo install $p
                 if [ $? != 0 ]
                 then
-                    echo "Forgot sudo mount -o remount,exec /tmp ?"
                     break
                 fi
             fi
@@ -28,10 +27,9 @@ case "$command" in
         do
             if ! echo "$already_installed" | grep "^$p " >/dev/null
             then
-                cargo install $p
+                TMPDIR=$XDG_RUNTIME_DIR cargo install $p
                 if [ $? != 0 ]
                 then
-                    echo "Forgot sudo mount -o remount,exec /tmp ?"
                     break
                 fi
             fi
