@@ -26,6 +26,6 @@ EOF
         sudo aptitude purge $@
         ;;
     update)
-        sudo apt-get -qq upgrade $@
+        sudo apt-get -qq install $@
         ;;
 esac
