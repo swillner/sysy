@@ -69,6 +69,35 @@ case "$command" in
         fi
         ;;
 
+    update)
+        if [ -z "$1" ]
+        then
+            for module in $scriptpath/modules/*
+            do
+                module=$(basename $module)
+                packages_file=$scriptpath/packages/$module
+                mkdir -p $scriptpath/packages
+                touch $packages_file
+                packages=$(cat $packages_file | grep -v -e "^#" | cut -f1 -d' ')
+                if [ ! -z "$packages" ]
+                then
+                    call_module $module update $packages
+                fi
+            done
+        else
+            module=$1
+            shift
+            packages_file=$scriptpath/packages/$module
+            mkdir -p $scriptpath/packages
+            touch $packages_file
+            packages=$(cat $packages_file | grep -v -e "^#" | cut -f1 -d' ')
+            if [ ! -z "$packages" ]
+            then
+                call_module $module update $packages
+            fi
+        fi
+        ;;
+
     uninstall)
         module=$1
         shift
