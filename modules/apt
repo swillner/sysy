@@ -9,10 +9,10 @@ case "$command" in
         echo "${desc:13:120}"
         ;;
     install)
-        sudo apt-get -qq install --no-upgrade $@
+        sudo apt-get -q install --no-upgrade $@
         ;;
     sync)
-        sudo apt-get -qq install --no-upgrade $@
+        sudo apt-get -q install --no-upgrade $@
         to_remove=$(cat <<EOF
 $(cat $scriptpath/packages/apt-remove)
 $(deborphan --guess-all -k $packages_file)
@@ -20,12 +20,12 @@ $(deborphan --guess-all -k $packages_file --find-config)
 EOF
                  )
         to_remove=$(sudo apt-get -qq -s purge $(echo "$to_remove") | cut -f2 -d ' ')
-        sudo aptitude -q -q -q -y purge $to_remove
+        sudo aptitude -q -q -q purge $to_remove
         ;;
     uninstall)
         sudo aptitude purge $@
         ;;
     update)
-        sudo apt-get -qq install $@
+        sudo apt-get -q install $@
         ;;
 esac
