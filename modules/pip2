@@ -8,15 +8,15 @@ case "$command" in
         echo
         ;;
     install)
-        pip2 -q install --user $@
+        pip2 install --user $@
         ;;
     sync)
-        pip2 -q install --user $@
+        pip2 install --user $@
         ;;
     uninstall)
-        pip2 -q uninstall --user $@
+        pip2 uninstall $@
         ;;
     update)
-        pip2 -q install --user --upgrade $@
+        pip2 install --user --upgrade $@
         ;;
 esac
