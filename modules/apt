@@ -12,17 +12,25 @@ case "$command" in
         sudo aptitude -q=3 install $@
         ;;
     sync)
-        missing=$(comm -23 <(echo "$@" | sed 's/ /\n/g' | sort) <(dpkg-query -f '${binary:Package}\n' -W | sed 's/:amd64//g' | sort) | 's/\n/ /g')
-        sudo aptitude -q=3 install $missing
+        missing=$(comm -23 <(echo "$@" | sed 's/ /\n/g' | sort) <(dpkg-query -f '${binary:Package}\n' -W | sed 's/:amd64//g' | sort))
+        if [ ! -z "$missing" ]
+        then
+            sudo aptitude -q=3 install $missing
+        fi
         to_remove=$(cat <<EOF
 $(cat $scriptpath/packages/apt-remove)
 $(deborphan --guess-all -k $packages_file)
 $(deborphan --guess-all -k $packages_file --find-config)
 EOF
                  )
-        to_remove=$(sudo apt-get -qq -s purge $(echo "$to_remove") 2>/dev/null | cut -f2 -d ' ')
-        sudo aptitude -q=3 purge $to_remove
-        sudo aptitude -q=3 purge '?config-files'
+        if [ ! -z "$to_remove" ]
+        then
+            to_remove=$(sudo apt-get -qq -s purge $(echo "$to_remove") 2>/dev/null | cut -f2 -d ' ')
+            if [ ! -z "$to_remove" ]
+            then
+                sudo aptitude -q=3 purge $to_remove
+            fi
+        fi
         ;;
     uninstall)
         sudo aptitude purge $@
