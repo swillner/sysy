@@ -9,18 +9,20 @@ case "$command" in
         echo "${desc:13:120}"
         ;;
     install)
-        sudo apt-get -q install --no-upgrade $@
+        sudo aptitude -q=3 install $@
         ;;
     sync)
-        sudo apt-get -q install --no-upgrade $@
+        missing=$(comm -23 <(echo "$@" | sed 's/ /\n/g' | sort) <(dpkg-query -f '${binary:Package}\n' -W | sed 's/:amd64//g' | sort) | 's/\n/ /g')
+        sudo aptitude -q=3 install $missing
         to_remove=$(cat <<EOF
 $(cat $scriptpath/packages/apt-remove)
 $(deborphan --guess-all -k $packages_file)
 $(deborphan --guess-all -k $packages_file --find-config)
 EOF
                  )
-        to_remove=$(sudo apt-get -qq -s purge $(echo "$to_remove") | cut -f2 -d ' ')
-        sudo aptitude -q -q -q purge $to_remove
+        to_remove=$(sudo apt-get -qq -s purge $(echo "$to_remove") 2>/dev/null | cut -f2 -d ' ')
+        sudo aptitude -q=3 purge $to_remove
+        sudo aptitude -q=3 purge '?config-files'
         ;;
     uninstall)
         sudo aptitude purge $@
