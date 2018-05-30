@@ -9,6 +9,7 @@ case "$command" in
         echo "${desc:19:120}"
         ;;
     install)
+        cabal update
         already_installed=$(cabal list --installed)
         for p in $@
         do
@@ -23,6 +24,7 @@ case "$command" in
         done
         ;;
     sync)
+        cabal update
         already_installed=$(cabal list --installed)
         for p in $@
         do
