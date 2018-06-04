@@ -9,7 +9,7 @@ case "$command" in
         echo "${desc:13:120}"
         ;;
     diff)
-        diff=$(comm -23 <(aptitude search '?installed !?automatic' | cut -f3 -d ' ' | sort) <(cat ~/sync/dosy/packages/apt | cut -f1 -d ' ' | sort))
+        diff=$(comm -23 <(aptitude search '?installed !?automatic' | cut -b 4- | cut -d ' ' -f1 | sort) <(cat ~/sync/dosy/packages/apt | cut -f1 -d ' ' | sort))
         echo "$diff"
         ;;
     install)
