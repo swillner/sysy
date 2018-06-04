@@ -26,7 +26,36 @@ check_module () {
 
 case "$command" in
 
+    diff)
+        if [ -z "$1" ]
+        then
+            echo "please specify a module" 1>&2
+            exit 2
+        fi
+        module=$1
+        check_module $module
+        packages_file=$scriptpath/packages/$module
+        call_module $module diff
+        ;;
+
+    edit)
+        if [ -z "$1" ]
+        then
+            echo "please specify a module" 1>&2
+            exit 2
+        fi
+        module=$1
+        check_module $module
+        packages_file=$scriptpath/packages/$module
+        $VISUAL $packages_file
+        ;;
+
     install)
+        if [ -z "$2" ]
+        then
+            echo "please specify a module and at least one package to install" 1>&2
+            exit 2
+        fi
         module=$1
         check_module $module
         shift

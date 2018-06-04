@@ -8,6 +8,10 @@ case "$command" in
         desc=$(aptitude show $1 | grep '^Description: ')
         echo "${desc:13:120}"
         ;;
+    diff)
+        diff=$(comm -23 <(aptitude search '?installed !?automatic' | cut -f3 -d ' ' | sort) <(cat ~/sync/dosy/packages/apt | cut -f1 -d ' ' | sort))
+        echo "$diff"
+        ;;
     install)
         sudo aptitude -q=3 install $@
         ;;
