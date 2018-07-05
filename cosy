@@ -1,0 +1,130 @@
+#!/usr/bin/env bash
+pushd "$(dirname "$0")" >/dev/null || exit 1
+scriptpath=$(pwd)
+popd >/dev/null || exit 1
+
+command=$1
+shift
+
+nicediff=icdiff
+
+add_file () {
+    local system_file=$1
+    if [ ! -f "$system_file" ]
+    then
+        echo "Could not find $system_file" 1>&2
+        exit 1
+    fi
+    local local_file=$scriptpath/files$system_file
+    mkdir -p "$(dirname "$local_file")"
+    sudo cat "$system_file" | tee "$local_file"
+}
+
+sync_file () {
+    sudo -v
+    local system_file=$1
+    local local_file=$scriptpath/files$system_file
+    if [ ! -f "$local_file" ]
+    then
+        echo "File not handled by cosy" 1>&2
+        exit 1
+    fi
+    if [ -f "$system_file" ]
+    then
+        if ! sudo diff "$local_file" "$system_file" >/dev/null 2>/dev/null
+        then
+            sudo $nicediff "$local_file" "$system_file" | less -X -F
+            read -r -p "Update file? [Y/n] " response
+            case $response in
+                [yY][eE][sS]|[yY]|'')
+                    sudo cat "$local_file" | sudo tee "$system_file" >/dev/null
+                    ;;
+                *)
+                    echo "Skipped $system_file"
+                    ;;
+            esac
+        fi
+    else
+        echo "New $system_file:"
+        less -X -F "$local_file"
+        read -r -p "Add file to system? [Y/n] " response
+        case $response in
+            [yY][eE][sS]|[yY]|'')
+                sudo mkdir -p "$(dirname "$system_file")"
+                sudo cat "$local_file" | sudo tee "$system_file" >/dev/null
+                ;;
+            *)
+                echo "Skipped $system_file"
+                ;;
+        esac
+    fi
+}
+
+case "$command" in
+
+    add)
+        system_file=$1
+        if [ -z "$system_file" ]
+        then
+            echo "please specify a system file" 1>&2
+            exit 2
+        fi
+        add_file "$system_file"
+        ;;
+
+    edit)
+        system_file=$1
+        if [ -z "$system_file" ]
+        then
+            echo "please specify a system file" 1>&2
+            exit 2
+        fi
+        local_file=$scriptpath/files$system_file
+        if [ ! -e "$local_file" ]
+        then
+            add_file "$system_file"
+        fi
+        if $VISUAL "$local_file"
+        then
+            sync_file "$system_file"
+        fi
+        ;;
+
+    sync)
+        system_file=$1
+        if [ -z "$system_file" ]
+        then
+            shopt -s globstar nullglob
+            for local_file in $scriptpath/files/**
+            do
+                if [ -f "$local_file" ]
+                then
+                    local_file=$(realpath --relative-to "$scriptpath/files" "$local_file")
+                    system_file=/$local_file
+                    sync_file "$system_file"
+                fi
+            done
+        else
+            sync_file "$system_file"
+        fi
+        ;;
+
+    *)
+        cat <<EOF
+cosy - configuration synchronization
+
+Usage:
+
+    cosy command [system file]
+
+Commands:
+
+    add         add system file to cosy
+    edit        edit system file handled by cosy
+    sync        synchronize
+
+EOF
+        exit 1
+        ;;
+
+esac
