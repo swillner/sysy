@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+set -e
 scriptpath=$(dirname "$(realpath "$0")")
 confdir=$HOME/.dosy.d
 dosydir=$(dirname "$scriptpath")
