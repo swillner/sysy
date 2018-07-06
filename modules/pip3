@@ -1,6 +1,5 @@
 #!/usr/bin/env bash
-# -*- mode: sh; -*-
-
+set -e
 command=$1
 shift
 
@@ -10,24 +9,28 @@ case "$command" in
         ;;
 
     install)
-        pip3 install --user "$@"
+        packages=$1
+        pip3 install --user "$packages"
         ;;
 
     sync)
-        pip3 install --user "$@"
+        packages=$1
+        pip3 install --user "$packages"
         ;;
 
     uninstall)
-        pip3 uninstall "$@"
+        packages=$1
+        pip3 uninstall "$packages"
         ;;
 
     update)
-        pip3 install --user --upgrade "$@"
+        packages=$1
+        pip3 install --user --upgrade "$packages"
         ;;
 
     *)
         echo "Module does not support this command" 1>&2
-        exit 1
+        exit 2
         ;;
 
 esac

@@ -1,6 +1,5 @@
 #!/usr/bin/env bash
-# -*- mode: sh; -*-
-
+set -e
 command=$1
 shift
 
@@ -10,24 +9,28 @@ case "$command" in
         ;;
 
     install)
-        go get "$@"
+        packages=$1
+        go get "$packages"
         ;;
 
     sync)
-        go get "$@"
+        packages=$1
+        go get "$packages"
         ;;
 
     uninstall)
-        go clean -i "$@"
+        packages=$1
+        go clean -i "$packages"
         ;;
 
     update)
-        go get -u "$@"
+        packages=$1
+        go get -u "$packages"
         ;;
 
     *)
         echo "Module does not support this command" 1>&2
-        exit 1
+        exit 2
         ;;
 
 esac

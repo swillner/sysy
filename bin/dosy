@@ -1,0 +1,78 @@
+#!/usr/bin/env bash
+set -e
+scriptpath=$(dirname "$(realpath "$0")")
+confdir=$HOME/.dosy.d
+tagsfile=$confdir/tags
+tagspath=$scriptpath/../tags
+
+command=$1
+shift
+
+case "$command" in
+
+    add)
+        system_file=$1
+        if [ -z "$system_file" ]
+        then
+            echo "please specify a system file" 1>&2
+            exit 2
+        fi
+        add_file "$system_file"
+        ;;
+
+    edit)
+        system_file=$1
+        if [ -z "$system_file" ]
+        then
+            echo "please specify a system file" 1>&2
+            exit 2
+        fi
+        local_file=$filespath$system_file
+        if [ ! -e "$local_file" ]
+        then
+            add_file "$system_file"
+        fi
+        if $VISUAL "$local_file"
+        then
+            sync_file "$system_file"
+        fi
+        ;;
+
+    sync)
+        system_file=$1
+        if [ -z "$system_file" ]
+        then
+            shopt -s globstar nullglob
+            for local_file in $filespath/**
+            do
+                if [ -f "$local_file" ]
+                then
+                    local_file=$(realpath --relative-to "$filespath" "$local_file")
+                    system_file=/$local_file
+                    sync_file "$system_file"
+                fi
+            done
+        else
+            sync_file "$system_file"
+        fi
+        ;;
+
+    *)
+        cat <<EOF
+cosy - configuration synchronization
+
+Usage:
+
+    cosy command [system file]
+
+Commands:
+
+    add         add system file to cosy
+    edit        edit system file handled by cosy
+    sync        synchronize
+
+EOF
+        exit 1
+        ;;
+
+esac

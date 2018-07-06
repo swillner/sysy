@@ -1,0 +1,193 @@
+#!/usr/bin/env bash
+set -e
+scriptpath=$(dirname "$(realpath "$0")")
+confdir=$HOME/.dosy.d
+tagsfile=$confdir/tags
+tagspath=$scriptpath/../tags
+modulespath=$scriptpath/../modules
+
+command=$1
+shift
+
+call_module () {
+    local module=$1
+    local command=$2
+    shift 2
+    local modulefile=$modulespath/$module
+    bash "$modulefile" "$command" "$@"
+}
+
+check_module () {
+    local module=$1
+    local modulefile=$modulespath/$module
+    if [ ! -f "$modulefile" ]
+    then
+        echo "module $module not found" 1>&2
+        exit 2
+    fi
+}
+
+get_packages () {
+    local module=$1
+    while IFS= read -r tag
+    do
+        packagesfile=$tagspath/$tag/packages/$module
+        if [ -f "$packagesfile" ]
+        then
+            grep -v -e "^#" < "$packagesfile" | cut -f1 -d' '
+        fi
+    done < "$tagsfile"
+}
+
+case "$command" in
+
+    diff)
+        module=$1
+        if [ -z "$module" ]
+        then
+            echo "please specify a module" 1>&2
+            exit 2
+        fi
+        check_module "$module"
+        packages=$(get_packages "$module")
+        if [ ! -z "$packages" ]
+        then
+            call_module "$module" diff "$packages"
+        fi
+        ;;
+
+    edit)
+        module=$1
+        tag=$2
+        if [ -z "$tag" ]
+        then
+            echo "please specify a module and a tag" 1>&2
+            exit 2
+        fi
+        check_module "$module"
+        packages_file=$tagspath/$tag/packages/$module
+        $VISUAL "$packages_file"
+        ;;
+
+    install)
+        module=$1
+        shift
+        tag=$1
+        shift
+        if [ -z "$1" ]
+        then
+            echo "please specify a module, a tag and at least one package to install" 1>&2
+            exit 2
+        fi
+        check_module "$module"
+        packagespath=$tagspath/$tag/packages
+        packagesfile=$packagespath/$module
+        mkdir -p "$packagespath"
+        touch "$packagesfile"
+        packages=$(cat "$packagesfile")
+        if call_module "$module" install "$@"
+        then
+            for p in "$@"
+            do
+                desc=$(call_module "$module" desc "$p")
+                packages=$(echo -e "$packages\\n$p # $desc" | sort | uniq)
+            done
+            echo "$packages" > "$packagesfile"
+        fi
+        ;;
+
+    sync)
+        module=$1
+        if [ -z "$module" ]
+        then
+            for module in $modulespath/*
+            do
+                module=$(basename "$module")
+                packages=$(get_packages "$module")
+                if [ ! -z "$packages" ]
+                then
+                    echo "Syncing $module ($(wc -l "$packages") selected..."
+                    call_module "$module" sync "$packages"
+                fi
+            done
+        else
+            check_module "$module"
+            packages=$(get_packages "$module")
+            if [ ! -z "$packages" ]
+            then
+                call_module "$module" sync "$packages"
+            fi
+        fi
+        ;;
+
+    uninstall)
+        module=$1
+        shift
+        tag=$1
+        shift
+        if [ -z "$1" ]
+        then
+            echo "please specify a module, a tag and at least one package to uninstall" 1>&2
+            exit 2
+        fi
+        check_module "$module"
+        call_module "$module" uninstall "$@"
+        packagespath=$tagspath/$tag/packages
+        packagesfile=$packagespath/$module
+        if [ -f "$packagesfile" ]
+        then
+            packages=$(cat "$packagesfile")
+            for p in "$@"
+            do
+                packages=$(echo "$packages" | grep -v -e "^$p #")
+            done
+            echo "$packages" > "$packagesfile"
+        fi
+        ;;
+
+    update)
+        module=$1
+        if [ -z "$module" ]
+        then
+            for module in $modulespath/*
+            do
+                module=$(basename "$module")
+                packages=$(get_packages "$module")
+                if [ ! -z "$packages" ]
+                then
+                    echo "Updating $module ($(wc -l "$packages") selected..."
+                    call_module "$module" update "$packages"
+                fi
+            done
+        else
+            check_module "$module"
+            packages=$(get_packages "$module")
+            if [ ! -z "$packages" ]
+            then
+                call_module "$module" update "$packages"
+            fi
+        fi
+        ;;
+
+    *)
+        cat <<EOF
+pasy - package synchronization
+
+Usage:
+
+    pasy COMMAND [ARGUMENTS]
+
+Commands:
+
+   diff      MODULE               diff installed and wanted packages
+   edit      TAG MODULE           edit wanted packages
+   install   TAG MODULE PACKAGES  install packages
+   sync      [MODULE]             synchronize
+   uninstall TAG MODULE PACKAGES  uninstall packages
+   update    [MODULE]             update packages
+
+EOF
+        exit 1
+        ;;
+
+esac

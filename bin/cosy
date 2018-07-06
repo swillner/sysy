@@ -1,37 +1,35 @@
 #!/usr/bin/env bash
-pushd "$(dirname "$0")" >/dev/null || exit 1
-scriptpath=$(pwd)
-popd >/dev/null || exit 1
+set -e
+scriptpath=$(dirname "$(realpath "$0")")
+confdir=$HOME/.dosy.d
+tagsfile=$confdir/tags
+tagspath=$scriptpath/../tags
 
 command=$1
 shift
 
-nicediff=icdiff
-filespath=$scriptpath/files
+if which icdiff >/dev/null 2>/dev/null
+then
+    nicediff="icdiff"
+else
+    nicediff="diff -y"
+fi
 
-ask_user () {
-    local default_indicator
-    if [ "$2" = "y" ]
-    then
-        default_indicator="[Y/n]"
-    else
-        default_indicator="[y/N]"
-    fi
-    local response
-    read -r -p "$1 $default_indicator " response
-    case $response in
-        [yY][eE][sS]|[yY]|'')
-            if [ "$2" != "y" ] && [ "$response" = "" ]
-            then
-                return 1
-            else
-                return 0
-            fi
-            ;;
-        *)
-            return 1
-            ;;
-    esac
+# shellcheck source=/home/sven/sync/dosy/scripts/include.sh
+source "$scriptpath/../scripts/include.sh"
+
+find_local_file () {
+    local system_file=$1
+    local local_file
+    while IFS= read -r tag
+    do
+        local_file=$tagspath/$tag/system$system_file
+        if [ -f "$local_file" ]
+        then
+            echo "$local_file"
+            return
+        fi
+    done < <(tac "$tagsfile") # read reversely to prioritize later tags in file
 }
 
 is_text_file () {
@@ -39,21 +37,23 @@ is_text_file () {
 }
 
 add_file () {
-    local system_file=$1
+    sudo -v
+    local tag=$1
+    local system_file=$2
     if [ ! -f "$system_file" ]
     then
         echo "Could not find $system_file" 1>&2
         exit 1
     fi
-    local local_file=$filespath$system_file
+    local local_file=$tagspath/$tag/system$system_file
     mkdir -p "$(dirname "$local_file")"
     sudo cat "$system_file" | tee "$local_file"
 }
 
 sync_file () {
     sudo -v
-    local system_file=$1
-    local local_file=$filespath$system_file
+    local local_file=$1
+    local system_file=$2
     if [ ! -f "$local_file" ]
     then
         echo "File not handled by cosy" 1>&2
@@ -63,10 +63,10 @@ sync_file () {
     then
         if ! sudo diff "$local_file" "$system_file" >/dev/null 2>/dev/null
         then
-            sudo $nicediff "$local_file" "$system_file" | less -X -F
+            sudo "$nicediff" "$local_file" "$system_file" | less -X -F
             if ask_user "Update file?" "y"
             then
-               sudo cat "$local_file" | sudo tee "$system_file" >/dev/null
+                sudo cat "$local_file" | sudo tee "$system_file" >/dev/null
             else
                 echo "Skipped $system_file"
             fi
@@ -97,30 +97,32 @@ sync_file () {
 case "$command" in
 
     add)
-        system_file=$1
-        if [ -z "$system_file" ]
+        tag=$1
+        system_file=$2
+        if [ ! -f "$system_file" ]
         then
-            echo "please specify a system file" 1>&2
+            echo "please specify a tag and a system file" 1>&2
             exit 2
         fi
-        add_file "$system_file"
+        add_file "$tag" "$system_file"
         ;;
 
     edit)
         system_file=$1
-        if [ -z "$system_file" ]
+        if [ ! -f "$system_file" ]
         then
             echo "please specify a system file" 1>&2
             exit 2
         fi
-        local_file=$filespath$system_file
+        local_file=$(find_local_file "$system_file")
         if [ ! -e "$local_file" ]
         then
-            add_file "$system_file"
+            read -r -p "Tag: " tag
+            add_file "$tag" "$system_file"
         fi
         if $VISUAL "$local_file"
         then
-            sync_file "$system_file"
+            sync_file "$local_file" "$system_file"
         fi
         ;;
 
@@ -129,23 +131,29 @@ case "$command" in
         if [ -z "$system_file" ]
         then
             shopt -s globstar nullglob
-            for local_file in $filespath/**
+            while IFS= read -r tag
             do
-                if [ -f "$local_file" ]
-                then
-                    local_file=$(realpath --relative-to "$filespath" "$local_file")
-                    system_file=/$local_file
-                    sync_file "$system_file"
-                fi
-            done
+                filespath=$tagspath/$tag/system
+                for local_file in $filespath/**
+                do
+                    if [ -f "$local_file" ]
+                    then
+                        local_file=$(realpath --relative-to "$filespath" "$local_file")
+                        system_file=/$local_file
+                        local_file=$(find_local_file "$system_file") # really find local file with highest priority
+                        sync_file "$local_file" "$system_file"
+                    fi
+                done
+            done < "$tagsfile"
         else
-            sync_file "$system_file"
+            local_file=$(find_local_file "$system_file")
+            sync_file "$local_file" "$system_file"
         fi
         ;;
 
     *)
         cat <<EOF
-cosy - configuration synchronization
+cosy - system configuration synchronization
 
 Usage:
 

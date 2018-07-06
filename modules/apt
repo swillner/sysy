@@ -1,38 +1,42 @@
 #!/usr/bin/env bash
-# -*- mode: sh; -*-
-
+set -e
 command=$1
 shift
 
 sudo -v
 
+get_packages_to_remove () {
+    packages=$1
+    deborphan --guess-all -k <(echo "$packages")
+    deborphan --guess-all --find-config -k <(echo "$packages")
+}
+
 case "$command" in
     desc)
-        desc=$(aptitude show "$1" | grep '^Description: ')
+        package=$1
+        desc=$(aptitude show "$package" | grep '^Description: ')
         echo "${desc:13:120}"
         ;;
 
     diff)
-        diff=$(comm -23 <(aptitude search '?installed !?automatic' | cut -b 4- | cut -d ' ' -f1 | sort) <( (cut -f1 -d ' ' | sort) < "$packages_file"))
+        packages=$1
+        diff=$(comm -23 <(aptitude search '?installed !?automatic' | cut -b 4- | cut -d ' ' -f1 | sort) <(echo "$packages" | sort))
         echo "$diff"
         ;;
 
     install)
-        sudo aptitude -q=3 install "$@"
+        packages=$1
+        sudo aptitude -q=3 install "$packages"
         ;;
 
     sync)
-        missing=$(comm -23 <(echo "$@" | sed 's/ /\n/g' | sort) <(dpkg-query -f '${binary:Package}\n' -W | sed 's/:amd64//g' | sort))
+        packages=$1
+        missing=$(comm -23 <(echo "$packages" | sed 's/ /\n/g' | sort) <(dpkg-query -f '${binary:Package}\n' -W | sed 's/:amd64//g' | sort))
         if [ ! -z "$missing" ]
         then
             sudo aptitude -q=3 install "$missing"
         fi
-        to_remove=$(cat <<EOF
-$(cat $packagespath/apt-remove)
-$(deborphan --guess-all -k "$packages_file")
-$(deborphan --guess-all -k "$packages_file" --find-config)
-EOF
-                 )
+        to_remove=$(get_packages_to_remove "$packages")
         if [ ! -z "$to_remove" ]
         then
             to_remove=$(sudo apt-get -qq -s purge "$to_remove" 2>/dev/null | cut -f2 -d ' ')
@@ -44,16 +48,18 @@ EOF
         ;;
 
     uninstall)
-        sudo aptitude purge "$@"
+        packages=$1
+        sudo aptitude purge "$packages"
         ;;
 
     update)
-        sudo apt-get -q install "$@"
+        packages=$1
+        sudo apt-get -q install "$packages"
         ;;
 
     *)
         echo "Module does not support this command" 1>&2
-        exit 1
+        exit 2
         ;;
 
 esac
