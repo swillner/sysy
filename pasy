@@ -6,17 +6,21 @@ popd >/dev/null || exit 1
 command=$1
 shift
 
+modulespath=$scriptpath/modules
+packagespath=$scriptpath/packages
+
 call_module () {
     local module=$1
     local command=$2
     shift 2
-    local module_file=$scriptpath/modules/$module
+    local module_file=$modulespath/$module
+    # shellcheck source=/dev/null
     source "$module_file" "$command" "$@"
 }
 
 check_module () {
     local module=$1
-    local module_file=$scriptpath/modules/$module
+    local module_file=$modulespath/$module
     if [ ! -e "$module_file" ]
     then
         echo "module $module not found" 1>&2
@@ -34,7 +38,7 @@ case "$command" in
             exit 2
         fi
         check_module "$module"
-        packages_file=$scriptpath/packages/$module
+        packages_file=$packagespath/$module
         call_module "$module" diff
         ;;
 
@@ -46,7 +50,7 @@ case "$command" in
             exit 2
         fi
         check_module "$module"
-        packages_file=$scriptpath/packages/$module
+        packages_file=$packagespath/$module
         $VISUAL "$packages_file"
         ;;
 
@@ -59,8 +63,8 @@ case "$command" in
         module=$1
         check_module "$module"
         shift
-        packages_file=$scriptpath/packages/$module
-        mkdir -p "$scriptpath/packages"
+        packages_file=$packagespath/$module
+        mkdir -p "$packagespath"
         touch "$packages_file"
         packages=$(cat "$packages_file")
         if call_module "$module" install "$@"
@@ -68,7 +72,7 @@ case "$command" in
             for p in "$@"
             do
                 desc=$(call_module "$module" desc "$p")
-                packages=$(echo -e "$packages\n$p # $desc" | sort | uniq)
+                packages=$(echo -e "$packages\\n$p # $desc" | sort | uniq)
             done
             echo "$packages" > "$packages_file"
         fi
@@ -78,13 +82,13 @@ case "$command" in
         module=$1
         if [ -z "$module" ]
         then
-            for module in $scriptpath/modules/*
+            for module in $modulespath/*
             do
                 module=$(basename "$module")
-                packages_file=$scriptpath/packages/$module
-                mkdir -p "$scriptpath/packages"
+                packages_file=$packagespath/$module
+                mkdir -p "$packagespath"
                 touch "$packages_file"
-                packages=$(grep -v -e "^#" | cut -f1 -d' ' < "$packages_file")
+                packages=$( (grep -v -e "^#" | cut -f1 -d' ') < "$packages_file")
                 if [ ! -z "$packages" ]
                 then
                     call_module "$module" sync "$packages"
@@ -93,10 +97,10 @@ case "$command" in
         else
             check_module "$module"
             shift
-            packages_file=$scriptpath/packages/$module
-            mkdir -p "$scriptpath/packages"
+            packages_file=$packagespath/$module
+            mkdir -p "$packagespath"
             touch "$packages_file"
-            packages=$(grep -v -e "^#" | cut -f1 -d' ' < "$packages_file")
+            packages=$( (grep -v -e "^#" | cut -f1 -d' ') < "$packages_file")
             if [ ! -z "$packages" ]
             then
                 call_module "$module" sync "$packages"
@@ -108,13 +112,13 @@ case "$command" in
         module=$1
         if [ -z "$module" ]
         then
-            for module in $scriptpath/modules/*
+            for module in $modulespath/*
             do
                 module=$(basename "$module")
-                packages_file=$scriptpath/packages/$module
-                mkdir -p "$scriptpath/packages"
+                packages_file=$packagespath/$module
+                mkdir -p "$packagespath"
                 touch "$packages_file"
-                packages=$(grep -v -e "^#" | cut -f1 -d' ' < "$packages_file")
+                packages=$( (grep -v -e "^#" | cut -f1 -d' ') < "$packages_file")
                 if [ ! -z "$packages" ]
                 then
                     call_module "$module" update "$packages"
@@ -123,10 +127,10 @@ case "$command" in
         else
             check_module "$module"
             shift
-            packages_file=$scriptpath/packages/$module
-            mkdir -p "$scriptpath/packages"
+            packages_file=$packagespath/$module
+            mkdir -p "$packagespath"
             touch "$packages_file"
-            packages=$(grep -v -e "^#" | cut -f1 -d' ' < "$packages_file")
+            packages=$( (grep -v -e "^#" | cut -f1 -d' ') < "$packages_file")
             if [ ! -z "$packages" ]
             then
                 call_module "$module" update "$packages"
@@ -144,8 +148,8 @@ case "$command" in
         check_module "$module"
         shift
         call_module "$module" uninstall "$@"
-        packages_file=$scriptpath/packages/$module
-        mkdir -p "$scriptpath/packages"
+        packages_file=$packagespath/$module
+        mkdir -p "$packagespath"
         touch "$packages_file"
         packages=$(cat "$packages_file")
         for p in "$@"

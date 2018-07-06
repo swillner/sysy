@@ -1,3 +1,4 @@
+#!/usr/bin/env bash
 # -*- mode: sh; -*-
 
 command=$1
@@ -7,16 +8,26 @@ case "$command" in
     desc)
         echo
         ;;
+
     install)
-        pip2 install --user $@
+        pip2 install --user "$@"
         ;;
+
     sync)
-        pip2 install --user $@
+        pip2 install --user "$@"
         ;;
+
     uninstall)
-        pip2 uninstall $@
+        pip2 uninstall "$@"
         ;;
+
     update)
-        pip2 install --user --upgrade $@
+        pip2 install --user --upgrade "$@"
         ;;
+
+    *)
+        echo "Module does not support this command" 1>&2
+        exit 1
+        ;;
+
 esac

@@ -1,3 +1,4 @@
+#!/usr/bin/env bash
 # -*- mode: sh; -*-
 
 command=$1
@@ -7,42 +8,45 @@ case "$command" in
     desc)
         echo # TODO cargo show
         ;;
+
     install)
         already_installed=$(cargo install --list)
-        for p in $@
+        for p in "$@"
         do
             if ! echo "$already_installed" | grep "^$p " >/dev/null
             then
-                TMPDIR=$XDG_RUNTIME_DIR cargo install $p
-                if [ $? != 0 ]
+                if ! TMPDIR=$XDG_RUNTIME_DIR cargo install "$p"
                 then
                     break
                 fi
             fi
         done
         ;;
+
     sync)
         already_installed=$(cargo install --list)
-        for p in $@
+        for p in "$@"
         do
             if ! echo "$already_installed" | grep "^$p " >/dev/null
             then
-                TMPDIR=$XDG_RUNTIME_DIR cargo install $p
-                if [ $? != 0 ]
+                if ! TMPDIR=$XDG_RUNTIME_DIR cargo install "$p"
                 then
                     break
                 fi
             fi
         done
         ;;
+
     uninstall)
-        for p in $@
+        for p in "$@"
         do
-            cargo uninstall $p
+            cargo uninstall "$p"
         done
         ;;
-    update)
-        echo "not implemented yet" 1>&2
+
+    *)
+        echo "Module does not support this command" 1>&2
         exit 1
         ;;
+
 esac

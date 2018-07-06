@@ -1,3 +1,4 @@
+#!/usr/bin/env bash
 # -*- mode: sh; -*-
 
 command=$1
@@ -7,22 +8,32 @@ case "$command" in
     desc)
         echo
         ;;
+
     install)
-        npm install -g $@
+        npm install -g "$@"
         ;;
+
     sync)
-        for p in $@
+        for p in "$@"
         do
-            if ! npm list -g $p >/dev/null 2>/dev/null
+            if ! npm list -g "$p" >/dev/null 2>/dev/null
             then
-                npm install -g $p
+                npm install -g "$p"
             fi
         done
         ;;
+
     uninstall)
-        npm uninstall -g $@
+        npm uninstall -g "$@"
         ;;
+
     update)
-        npm update $@
+        npm update "$@"
         ;;
+
+    *)
+        echo "Module does not support this command" 1>&2
+        exit 1
+        ;;
+
 esac

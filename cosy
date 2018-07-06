@@ -7,6 +7,36 @@ command=$1
 shift
 
 nicediff=icdiff
+filespath=$scriptpath/files
+
+ask_user () {
+    local default_indicator
+    if [ "$2" = "y" ]
+    then
+        default_indicator="[Y/n]"
+    else
+        default_indicator="[y/N]"
+    fi
+    local response
+    read -r -p "$1 $default_indicator " response
+    case $response in
+        [yY][eE][sS]|[yY]|'')
+            if [ "$2" != "y" ] && [ "$response" = "" ]
+            then
+                return 1
+            else
+                return 0
+            fi
+            ;;
+        *)
+            return 1
+            ;;
+    esac
+}
+
+is_text_file () {
+    grep -qI '.' "$1"
+}
 
 add_file () {
     local system_file=$1
@@ -15,7 +45,7 @@ add_file () {
         echo "Could not find $system_file" 1>&2
         exit 1
     fi
-    local local_file=$scriptpath/files$system_file
+    local local_file=$filespath$system_file
     mkdir -p "$(dirname "$local_file")"
     sudo cat "$system_file" | tee "$local_file"
 }
@@ -23,40 +53,44 @@ add_file () {
 sync_file () {
     sudo -v
     local system_file=$1
-    local local_file=$scriptpath/files$system_file
+    local local_file=$filespath$system_file
     if [ ! -f "$local_file" ]
     then
         echo "File not handled by cosy" 1>&2
         exit 1
     fi
-    if [ -f "$system_file" ]
+    if sudo ls "$system_file" >/dev/null 2>/dev/null
     then
         if ! sudo diff "$local_file" "$system_file" >/dev/null 2>/dev/null
         then
             sudo $nicediff "$local_file" "$system_file" | less -X -F
-            read -r -p "Update file? [Y/n] " response
-            case $response in
-                [yY][eE][sS]|[yY]|'')
-                    sudo cat "$local_file" | sudo tee "$system_file" >/dev/null
-                    ;;
-                *)
-                    echo "Skipped $system_file"
-                    ;;
-            esac
+            if ask_user "Update file?" "y"
+            then
+               sudo cat "$local_file" | sudo tee "$system_file" >/dev/null
+            else
+                echo "Skipped $system_file"
+            fi
         fi
     else
-        echo "New $system_file:"
-        less -X -F "$local_file"
-        read -r -p "Add file to system? [Y/n] " response
-        case $response in
-            [yY][eE][sS]|[yY]|'')
-                sudo mkdir -p "$(dirname "$system_file")"
-                sudo cat "$local_file" | sudo tee "$system_file" >/dev/null
-                ;;
-            *)
-                echo "Skipped $system_file"
-                ;;
-        esac
+        if is_text_file "$local_file"
+        then
+            echo "New $system_file:"
+            less -X -F "$local_file"
+        else
+            echo "New $system_file (binary)"
+        fi
+        if ask_user "Add file to system?" "y"
+        then
+            sudo mkdir -p "$(dirname "$system_file")"
+            sudo cat "$local_file" | sudo tee "$system_file" >/dev/null
+            if ask_user "Make accessible for all?" "y"
+            then
+                sudo chmod og+rX "$(dirname "$system_file")"
+                sudo chmod og+rX "$system_file"
+            fi
+        else
+            echo "Skipped $system_file"
+        fi
     fi
 }
 
@@ -79,7 +113,7 @@ case "$command" in
             echo "please specify a system file" 1>&2
             exit 2
         fi
-        local_file=$scriptpath/files$system_file
+        local_file=$filespath$system_file
         if [ ! -e "$local_file" ]
         then
             add_file "$system_file"
@@ -95,11 +129,11 @@ case "$command" in
         if [ -z "$system_file" ]
         then
             shopt -s globstar nullglob
-            for local_file in $scriptpath/files/**
+            for local_file in $filespath/**
             do
                 if [ -f "$local_file" ]
                 then
-                    local_file=$(realpath --relative-to "$scriptpath/files" "$local_file")
+                    local_file=$(realpath --relative-to "$filespath" "$local_file")
                     system_file=/$local_file
                     sync_file "$system_file"
                 fi

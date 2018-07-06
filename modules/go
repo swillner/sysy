@@ -1,3 +1,4 @@
+#!/usr/bin/env bash
 # -*- mode: sh; -*-
 
 command=$1
@@ -7,16 +8,26 @@ case "$command" in
     desc)
         echo
         ;;
+
     install)
-        go get $@
+        go get "$@"
         ;;
+
     sync)
-        go get $@
+        go get "$@"
         ;;
+
     uninstall)
-        go clean -i $@
+        go clean -i "$@"
         ;;
+
     update)
-        go get -u $@
+        go get -u "$@"
         ;;
+
+    *)
+        echo "Module does not support this command" 1>&2
+        exit 1
+        ;;
+
 esac

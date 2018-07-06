@@ -1,3 +1,4 @@
+#!/usr/bin/env bash
 # -*- mode: sh; -*-
 
 command=$1
@@ -7,16 +8,26 @@ case "$command" in
     desc)
         echo
         ;;
+
     install)
-        pip3 install --user $@
+        pip3 install --user "$@"
         ;;
+
     sync)
-        pip3 install --user $@
+        pip3 install --user "$@"
         ;;
+
     uninstall)
-        pip3 uninstall $@
+        pip3 uninstall "$@"
         ;;
+
     update)
-        pip3 install --user --upgrade $@
+        pip3 install --user --upgrade "$@"
         ;;
+
+    *)
+        echo "Module does not support this command" 1>&2
+        exit 1
+        ;;
+
 esac

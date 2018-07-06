@@ -1,45 +1,59 @@
+#!/usr/bin/env bash
 # -*- mode: sh; -*-
 
 command=$1
 shift
 
+sudo -v
+
 case "$command" in
     desc)
-        desc=$(aptitude show $1 | grep '^Description: ')
+        desc=$(aptitude show "$1" | grep '^Description: ')
         echo "${desc:13:120}"
         ;;
+
     diff)
-        diff=$(comm -23 <(aptitude search '?installed !?automatic' | cut -b 4- | cut -d ' ' -f1 | sort) <(cat ~/sync/dosy/packages/apt | cut -f1 -d ' ' | sort))
+        diff=$(comm -23 <(aptitude search '?installed !?automatic' | cut -b 4- | cut -d ' ' -f1 | sort) <( (cut -f1 -d ' ' | sort) < "$packages_file"))
         echo "$diff"
         ;;
+
     install)
-        sudo aptitude -q=3 install $@
+        sudo aptitude -q=3 install "$@"
         ;;
+
     sync)
         missing=$(comm -23 <(echo "$@" | sed 's/ /\n/g' | sort) <(dpkg-query -f '${binary:Package}\n' -W | sed 's/:amd64//g' | sort))
         if [ ! -z "$missing" ]
         then
-            sudo aptitude -q=3 install $missing
+            sudo aptitude -q=3 install "$missing"
         fi
         to_remove=$(cat <<EOF
-$(cat $scriptpath/packages/apt-remove)
-$(deborphan --guess-all -k $packages_file)
-$(deborphan --guess-all -k $packages_file --find-config)
+$(cat $packagespath/apt-remove)
+$(deborphan --guess-all -k "$packages_file")
+$(deborphan --guess-all -k "$packages_file" --find-config)
 EOF
                  )
         if [ ! -z "$to_remove" ]
         then
-            to_remove=$(sudo apt-get -qq -s purge $(echo "$to_remove") 2>/dev/null | cut -f2 -d ' ')
+            to_remove=$(sudo apt-get -qq -s purge "$to_remove" 2>/dev/null | cut -f2 -d ' ')
             if [ ! -z "$to_remove" ]
             then
-                sudo aptitude -q=3 purge $to_remove
+                sudo aptitude -q=3 purge "$to_remove"
             fi
         fi
         ;;
+
     uninstall)
-        sudo aptitude purge $@
+        sudo aptitude purge "$@"
         ;;
+
     update)
-        sudo apt-get -q install $@
+        sudo apt-get -q install "$@"
         ;;
+
+    *)
+        echo "Module does not support this command" 1>&2
+        exit 1
+        ;;
+
 esac

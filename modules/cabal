@@ -1,3 +1,4 @@
+#!/usr/bin/env bash
 # -*- mode: sh; -*-
 
 command=$1
@@ -5,45 +6,43 @@ shift
 
 case "$command" in
     desc)
-        desc=$(cabal info $1 | grep '^    Synopsis:      ')
+        desc=$(cabal info "$1" | grep '^    Synopsis:      ')
         echo "${desc:19:120}"
         ;;
+
     install)
         cabal update
         already_installed=$(cabal list --installed)
-        for p in $@
+        for p in "$@"
         do
             if ! echo "$already_installed" | grep "^* $p$" >/dev/null
             then
-                TMPDIR=$XDG_RUNTIME_DIR cabal install $p
-                if [ $? != 0 ]
+                if ! TMPDIR=$XDG_RUNTIME_DIR cabal install "$p"
                 then
                     break
                 fi
             fi
         done
         ;;
+
     sync)
         cabal update
         already_installed=$(cabal list --installed)
-        for p in $@
+        for p in "$@"
         do
             if ! echo "$already_installed" | grep "^* $p$" >/dev/null
             then
-                TMPDIR=$XDG_RUNTIME_DIR cabal install $p
-                if [ $? != 0 ]
+                if ! TMPDIR=$XDG_RUNTIME_DIR cabal install "$p"
                 then
                     break
                 fi
             fi
         done
         ;;
-    uninstall)
-        echo "not implemented yet" 1>&2
+
+    *)
+        echo "Module does not support this command" 1>&2
         exit 1
         ;;
-    update)
-        echo "not implemented yet" 1>&2
-        exit 1
-        ;;
+
 esac
