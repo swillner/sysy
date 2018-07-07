@@ -4,6 +4,11 @@ command=$1
 shift
 
 case "$command" in
+
+    bootstrap)
+        sudo apt-get install cargo
+        ;;
+
     desc)
         echo
         ;;

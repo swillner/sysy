@@ -5,9 +5,6 @@ confdir=$HOME/.dosy.d
 tagsfile=$confdir/tags
 tagspath=$scriptpath/../tags
 
-command=$1
-shift
-
 if which icdiff >/dev/null 2>/dev/null
 then
     nicediff="icdiff"
@@ -56,7 +53,7 @@ sync_file () {
     local system_file=$2
     if [ ! -f "$local_file" ]
     then
-        echo "File not handled by cosy" 1>&2
+        echo "$local_file not handled by cosy" 1>&2
         exit 1
     fi
     if sudo ls "$system_file" >/dev/null 2>/dev/null
@@ -94,6 +91,8 @@ sync_file () {
     fi
 }
 
+command=$1
+shift
 case "$command" in
 
     add)
@@ -101,7 +100,7 @@ case "$command" in
         system_file=$2
         if [ ! -f "$system_file" ]
         then
-            echo "please specify a tag and a system file" 1>&2
+            echo "Please specify a tag and a system file" 1>&2
             exit 2
         fi
         add_file "$tag" "$system_file"
@@ -111,7 +110,7 @@ case "$command" in
         system_file=$1
         if [ ! -f "$system_file" ]
         then
-            echo "please specify a system file" 1>&2
+            echo "Please specify a system file" 1>&2
             exit 2
         fi
         local_file=$(find_local_file "$system_file")
@@ -120,7 +119,7 @@ case "$command" in
             read -r -p "Tag: " tag
             add_file "$tag" "$system_file"
         fi
-        if $VISUAL "$local_file"
+        if open_in_editor "$local_file"
         then
             sync_file "$local_file" "$system_file"
         fi
@@ -157,13 +156,13 @@ cosy - system configuration synchronization
 
 Usage:
 
-    cosy command [system file]
+    $0 COMMAND [ARGUMENTS]
 
 Commands:
 
-    add         add system file to cosy
-    edit        edit system file handled by cosy
-    sync        synchronize
+    add  TAG FILE  add system file to cosy
+    edit FILE      edit system file handled by cosy
+    sync [FILE]    synchronize
 
 EOF
         exit 1

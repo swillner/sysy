@@ -4,6 +4,11 @@ command=$1
 shift
 
 case "$command" in
+
+    bootstrap)
+        sudo apt-get install cabal-install
+        ;;
+
     desc)
         package=$1
         desc=$(cabal info "$package" | grep '^    Synopsis:      ')

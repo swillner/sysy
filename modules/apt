@@ -12,6 +12,11 @@ get_packages_to_remove () {
 }
 
 case "$command" in
+
+    bootstrap)
+        sudo apt-get install aptitude
+        ;;
+
     desc)
         package=$1
         desc=$(aptitude show "$package" | grep '^Description: ')

@@ -5,71 +5,168 @@ confdir=$HOME/.dosy.d
 tagsfile=$confdir/tags
 tagspath=$scriptpath/../tags
 
+# shellcheck source=/home/sven/sync/dosy/scripts/include.sh
+source "$scriptpath/../scripts/include.sh"
+
+add_custom_file () {
+    local tag=$1
+    local file=$2
+    local custom_file=$3
+    local filespath=$tagspath/$tag/files
+    local absolute_custom_file=$filespath/$custom_file
+    mkdir -p "$(dirname "$absolute_custom_file")"
+    mv "$file" "$absolute_custom_file"
+    ln -s "$(realpath "$absolute_custom_file")" "$file"
+    local custompath=$tagspath/$tag/custom
+    local relative_file
+    relative_file=$(realpath --relative-base "$HOME" "$file") # absolute path if not under home
+    echo "$custom_file;$relative_file" >> "$custompath"
+}
+
+find_local_file_tag () {
+    local local_file=$1
+    local type=$2 # files or dotfiles
+    while IFS= read -r tag
+    do
+        this_local_file=$tagspath/$tag/$type/$local_file
+        if [ -f "$this_local_file" ]
+        then
+            echo "$tag"
+            return
+        fi
+    done < <(tac "$tagsfile") # read reversely to prioritize later tags in file
+}
+
+sync_file () {
+    local local_file=$1
+    local file=$2
+    if [ ! -e "$local_file" ]
+    then
+        echo "$local_file not found" 1>&2
+        exit 2
+    fi
+    if [ ! -e "$file" ] || [ "$(realpath "$file")" != "$local_file" ]
+    then
+        ln -si "$local_file" "$file"
+    fi
+}
+
 command=$1
 shift
-
 case "$command" in
 
     add)
-        system_file=$1
-        if [ -z "$system_file" ]
+        tag=$1
+        file=$2
+        if [ ! -e "$file" ]
         then
-            echo "please specify a system file" 1>&2
+            echo "Please specify a tag and a file or directory" 1>&2
             exit 2
         fi
-        add_file "$system_file"
-        ;;
-
-    edit)
-        system_file=$1
-        if [ -z "$system_file" ]
+        custom_file=$3
+        if [ -z "$custom_file" ]
         then
-            echo "please specify a system file" 1>&2
-            exit 2
-        fi
-        local_file=$filespath$system_file
-        if [ ! -e "$local_file" ]
-        then
-            add_file "$system_file"
-        fi
-        if $VISUAL "$local_file"
-        then
-            sync_file "$system_file"
+            file=$(realpath --relative-to "$HOME" "$file")
+            if [ "$(dirname "$file")" != "." ] || [ "${file:0:1}" != "." ] || [ "$file" == "." ]
+            then
+                echo "This is not a dotfile" 1>&2
+                exit 2
+            fi
+            undotted_file=${file:1}
+            dotfilespath=$tagspath/$tag/dotfiles
+            local_file=$dotfilespath/$undotted_file
+            if [ -f "$local_file" ]
+            then
+                echo "$file is already handled by dosy with tag $tag" 1>&2
+                exit 2
+            fi
+            mkdir -p "$dotfilespath"
+            mv "$HOME/$file" "$local_file"
+            ln -s "$(realpath "$local_file")" "$HOME/$file"
+        else
+            add_custom_file "$tag" "$custom_file" "$file"
         fi
         ;;
 
     sync)
-        system_file=$1
-        if [ -z "$system_file" ]
-        then
-            shopt -s globstar nullglob
-            for local_file in $filespath/**
+        while IFS= read -r tag
+        do
+            filespath=$tagspath/$tag/dotfiles
+            for local_file in $filespath/*
             do
-                if [ -f "$local_file" ]
-                then
-                    local_file=$(realpath --relative-to "$filespath" "$local_file")
-                    system_file=/$local_file
-                    sync_file "$system_file"
-                fi
+                local_file=$(realpath --relative-to "$filespath" "$local_file")
+                file=$HOME/.$local_file
+                local_file=$tagspath/$(find_local_file_tag "$local_file" "dotfiles")/dotfiles/$local_file
+                sync_file "$local_file" "$file"
             done
+            custompath=$tagspath/$tag/custom
+            filespath=$tagspath/$tag/files
+            while IFS= read -r line
+            do
+                custom_file=$(echo "$line" | cut -f 1 -d ';')
+                file=$(echo "$line" | cut -f 2 -d ';')
+                if [ "${file:0:1}" != "/" ]
+                then
+                    file=$HOME/$file
+                fi
+                sync_file "$filespath/$custom_file" "$file"
+            done < "$custompath"
+        done < "$tagsfile"
+        ;;
+
+    unhandle)
+        file=$1
+        if [ ! -e "$file" ]
+        then
+            echo "Please specify a file or directory" 1>&2
+            exit 2
+        fi
+        local_file=$(realpath --relative-to "$HOME" "$file")
+        tag=$(find_local_file_tag "$local_file" "files")
+        if [ ! -z "$tag" ]
+        then
+            local_file=$tagspath/$tag/files/$local_file
         else
-            sync_file "$system_file"
+            tag=$(find_local_file_tag "$local_file" "dotfiles")
+            if [ ! -z "$tag" ]
+            then
+                local_file=$tagspath/$tag/dotfiles/$local_file
+            else
+                echo "$file not handled by dosy" 1>&2
+                exit 2
+            fi
+        fi
+        if [ "$(realpath "$file")" != "$local_file" ]
+        then
+            echo "$file not currently synced" 1>&2
+            if ask_user "Delete handle anyway?" "n"
+            then
+                rm -rfi "$local_file"
+            fi
+        else
+            if ask_user "Also delete file?" "n"
+            then
+                rm "$file"
+                rm -rfi "$local_file"
+            else
+                rm "$file"
+                mv "$local_file" "$file"
+            fi
         fi
         ;;
 
     *)
         cat <<EOF
-cosy - configuration synchronization
+dosy - dotfile synchronization
 
 Usage:
 
-    cosy command [system file]
+    $0 COMMAND [ARGUMENTS]
 
 Commands:
 
-    add         add system file to cosy
-    edit        edit system file handled by cosy
-    sync        synchronize
+    add  TAG FILE [CUSTOMPATH]  add dotfile or custom file to dosy
+    sync                        synchronize
 
 EOF
         exit 1

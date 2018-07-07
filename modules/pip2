@@ -4,6 +4,12 @@ command=$1
 shift
 
 case "$command" in
+
+    bootstrap)
+        sudo apt-get install python2
+        curl -s https://bootstrap.pypa.io/get-pip.py | python2 - --user
+        ;;
+
     desc)
         echo
         ;;

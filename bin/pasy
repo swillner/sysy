@@ -6,8 +6,8 @@ tagsfile=$confdir/tags
 tagspath=$scriptpath/../tags
 modulespath=$scriptpath/../modules
 
-command=$1
-shift
+# shellcheck source=/home/sven/sync/dosy/scripts/include.sh
+source "$scriptpath/../scripts/include.sh"
 
 call_module () {
     local module=$1
@@ -22,7 +22,7 @@ check_module () {
     local modulefile=$modulespath/$module
     if [ ! -f "$modulefile" ]
     then
-        echo "module $module not found" 1>&2
+        echo "Module $module not found" 1>&2
         exit 2
     fi
 }
@@ -39,15 +39,32 @@ get_packages () {
     done < "$tagsfile"
 }
 
+command=$1
+shift
 case "$command" in
 
-    diff)
+    bootstrap)
         module=$1
         if [ -z "$module" ]
         then
-            echo "please specify a module" 1>&2
-            exit 2
+            for module in $modulespath/*
+            do
+                module=$(basename "$module")
+                packages=$(get_packages "$module")
+                if [ ! -z "$packages" ]
+                then
+                    echo "Bootstrapping $module ($(wc -l "$packages") selected..."
+                    call_module "$module" bootstrap
+                fi
+            done
+        else
+            check_module "$module"
+            call_module "$module" bootstrap
         fi
+        ;;
+
+    diff)
+        module=${1:?"Please specify a module"}
         check_module "$module"
         packages=$(get_packages "$module")
         if [ ! -z "$packages" ]
@@ -57,26 +74,21 @@ case "$command" in
         ;;
 
     edit)
-        module=$1
-        tag=$2
-        if [ -z "$tag" ]
-        then
-            echo "please specify a module and a tag" 1>&2
-            exit 2
-        fi
+        module=${1:?"Please specify a module"}
+        tag=${2:?"Please specify a tag"}
         check_module "$module"
         packages_file=$tagspath/$tag/packages/$module
-        $VISUAL "$packages_file"
+        open_in_editor "$packages_file"
         ;;
 
     install)
-        module=$1
+        module=${1:?"Please specify a module"}
         shift
-        tag=$1
+        tag=${1:?"Please specify a tag"}
         shift
         if [ -z "$1" ]
         then
-            echo "please specify a module, a tag and at least one package to install" 1>&2
+            echo "Please specify at least one package to install" 1>&2
             exit 2
         fi
         check_module "$module"
@@ -121,13 +133,13 @@ case "$command" in
         ;;
 
     uninstall)
-        module=$1
+        module=${1:?"Please specify a module"}
         shift
-        tag=$1
+        tag=${1:?"Please specify a tag"}
         shift
         if [ -z "$1" ]
         then
-            echo "please specify a module, a tag and at least one package to uninstall" 1>&2
+            echo "Please specify at least one package to install" 1>&2
             exit 2
         fi
         check_module "$module"
@@ -175,10 +187,11 @@ pasy - package synchronization
 
 Usage:
 
-    pasy COMMAND [ARGUMENTS]
+    $0 COMMAND [ARGUMENTS]
 
 Commands:
 
+   bootstrap [MODULE]             bootstrap model or all used models
    diff      MODULE               diff installed and wanted packages
    edit      TAG MODULE           edit wanted packages
    install   TAG MODULE PACKAGES  install packages
