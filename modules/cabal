@@ -1,12 +1,15 @@
 #!/usr/bin/env bash
 set -e
-command=$1
-shift
 
+command=$1
+shift || true
 case "$command" in
 
     bootstrap)
-        sudo apt-get install cabal-install
+        if ! which cabal >/dev/null 2>/dev/null
+        then
+            sudo apt-get install cabal-install
+        fi
         ;;
 
     desc)
@@ -16,10 +19,9 @@ case "$command" in
         ;;
 
     install)
-        packages=$1
         cabal update
         already_installed=$(cabal list --installed)
-        for p in $packages
+        for p in "$@"
         do
             if ! echo "$already_installed" | grep "^* $p$" >/dev/null
             then
@@ -32,10 +34,9 @@ case "$command" in
         ;;
 
     sync)
-        packages=$1
         cabal update
         already_installed=$(cabal list --installed)
-        for p in $packages
+        for p in "$@"
         do
             if ! echo "$already_installed" | grep "^* $p$" >/dev/null
             then

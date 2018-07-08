@@ -1,9 +1,5 @@
 #!/usr/bin/env bash
 set -e
-command=$1
-shift
-
-sudo -v
 
 get_packages_to_remove () {
     packages=$1
@@ -11,10 +7,15 @@ get_packages_to_remove () {
     deborphan --guess-all --find-config -k <(echo "$packages")
 }
 
+command=$1
+shift || true
 case "$command" in
 
     bootstrap)
-        sudo apt-get install aptitude
+        if ! which aptitude >/dev/null 2>/dev/null
+        then
+            sudo apt-get install aptitude
+        fi
         ;;
 
     desc)
@@ -24,24 +25,21 @@ case "$command" in
         ;;
 
     diff)
-        packages=$1
-        diff=$(comm -23 <(aptitude search '?installed !?automatic' | cut -b 4- | cut -d ' ' -f1 | sort) <(echo "$packages" | sort))
+        diff=$(comm -23 <(aptitude search '?installed !?automatic' | cut -b 4- | cut -d ' ' -f1 | sort) <(echo "$@" | sort))
         echo "$diff"
         ;;
 
     install)
-        packages=$1
-        sudo aptitude -q=3 install "$packages"
+        sudo aptitude -q=3 install "$@"
         ;;
 
     sync)
-        packages=$1
-        missing=$(comm -23 <(echo "$packages" | sed 's/ /\n/g' | sort) <(dpkg-query -f '${binary:Package}\n' -W | sed 's/:amd64//g' | sort))
+        missing=$(comm -23 <(echo "$@" | sed 's/ /\n/g' | sort) <(dpkg-query -f '${binary:Package}\n' -W | sed 's/:amd64//g' | sort))
         if [ ! -z "$missing" ]
         then
             sudo aptitude -q=3 install "$missing"
         fi
-        to_remove=$(get_packages_to_remove "$packages")
+        to_remove=$(get_packages_to_remove "$@")
         if [ ! -z "$to_remove" ]
         then
             to_remove=$(sudo apt-get -qq -s purge "$to_remove" 2>/dev/null | cut -f2 -d ' ')
@@ -53,13 +51,11 @@ case "$command" in
         ;;
 
     uninstall)
-        packages=$1
-        sudo aptitude purge "$packages"
+        sudo aptitude purge "$@"
         ;;
 
     update)
-        packages=$1
-        sudo apt-get -q install "$packages"
+        sudo apt-get -q install "$@"
         ;;
 
     *)

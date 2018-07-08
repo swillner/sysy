@@ -39,8 +39,7 @@ add_file () {
     local system_file=$2
     if [ ! -f "$system_file" ]
     then
-        echo "Could not find $system_file" 1>&2
-        exit 1
+        error "Could not find $system_file"
     fi
     local local_file=$tagspath/$tag/system$system_file
     mkdir -p "$(dirname "$local_file")"
@@ -53,8 +52,7 @@ sync_file () {
     local system_file=$2
     if [ ! -f "$local_file" ]
     then
-        echo "$local_file not handled by cosy" 1>&2
-        exit 1
+        error "$local_file not handled by cosy"
     fi
     if sudo ls "$system_file" >/dev/null 2>/dev/null
     then
@@ -65,16 +63,16 @@ sync_file () {
             then
                 sudo cat "$local_file" | sudo tee "$system_file" >/dev/null
             else
-                echo "Skipped $system_file"
+                info "Skipped $system_file"
             fi
         fi
     else
         if is_text_file "$local_file"
         then
-            echo "New $system_file:"
+            info "New $system_file:"
             less -X -F "$local_file"
         else
-            echo "New $system_file (binary)"
+            info "New $system_file (binary)"
         fi
         if ask_user "Add file to system?" "y"
         then
@@ -86,13 +84,13 @@ sync_file () {
                 sudo chmod og+rX "$system_file"
             fi
         else
-            echo "Skipped $system_file"
+            info "Skipped $system_file"
         fi
     fi
 }
 
 command=$1
-shift
+shift || true
 case "$command" in
 
     add)
@@ -100,8 +98,7 @@ case "$command" in
         system_file=$2
         if [ ! -f "$system_file" ]
         then
-            echo "Please specify a tag and a system file" 1>&2
-            exit 2
+            error "Please specify a tag and a system file"
         fi
         add_file "$tag" "$system_file"
         ;;
@@ -110,8 +107,7 @@ case "$command" in
         system_file=$1
         if [ ! -f "$system_file" ]
         then
-            echo "Please specify a system file" 1>&2
-            exit 2
+            error "Please specify a system file"
         fi
         local_file=$(find_local_file "$system_file")
         if [ ! -e "$local_file" ]

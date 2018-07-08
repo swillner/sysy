@@ -1,12 +1,15 @@
 #!/usr/bin/env bash
 set -e
-command=$1
-shift
 
+command=$1
+shift || true
 case "$command" in
 
     bootstrap)
-        sudo apt-get install golang-go
+        if ! which go >/dev/null 2>/dev/null
+        then
+            sudo apt-get install golang-go
+        fi
         ;;
 
     desc)
@@ -14,23 +17,19 @@ case "$command" in
         ;;
 
     install)
-        packages=$1
-        go get "$packages"
+        go get "$@"
         ;;
 
     sync)
-        packages=$1
-        go get "$packages"
+        go get "$@"
         ;;
 
     uninstall)
-        packages=$1
-        go clean -i "$packages"
+        go clean -i "$@"
         ;;
 
     update)
-        packages=$1
-        go get -u "$packages"
+        go get -u "$@"
         ;;
 
     *)

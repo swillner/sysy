@@ -1,12 +1,15 @@
 #!/usr/bin/env bash
 set -e
-command=$1
-shift
 
+command=$1
+shift || true
 case "$command" in
 
     bootstrap)
-        sudo apt-get install npm
+        if ! which npm >/dev/null 2>/dev/null
+        then
+            sudo apt-get install npm
+        fi
         ;;
 
     desc)
@@ -14,13 +17,11 @@ case "$command" in
         ;;
 
     install)
-        packages=$1
-        npm install -g "$packages"
+        npm install -g "$@"
         ;;
 
     sync)
-        packages=$1
-        for p in $packages
+        for p in "$@"
         do
             if ! npm list -g "$p" >/dev/null 2>/dev/null
             then
@@ -30,13 +31,11 @@ case "$command" in
         ;;
 
     uninstall)
-        packages=$1
-        npm uninstall -g "$packages"
+        npm uninstall -g "$@"
         ;;
 
     update)
-        packages=$1
-        npm update "$packages"
+        npm update "$@"
         ;;
 
     *)

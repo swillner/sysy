@@ -22,8 +22,7 @@ check_module () {
     local modulefile=$modulespath/$module
     if [ ! -f "$modulefile" ]
     then
-        echo "Module $module not found" 1>&2
-        exit 2
+        error "Module $module not found"
     fi
 }
 
@@ -34,13 +33,29 @@ get_packages () {
         packagesfile=$tagspath/$tag/packages/$module
         if [ -f "$packagesfile" ]
         then
-            grep -v -e "^#" < "$packagesfile" | cut -f1 -d' '
+            grep -v -e "^#" < "$packagesfile" | cut -f1 -d' ' # | tr '\n' ' '
         fi
     done < "$tagsfile"
 }
 
+call_module_for_all_packages () {
+    local module=$1
+    local command=$2
+    local desc=$3
+    readarray -t packages <<< "$(get_packages "$module")"
+    packages_count=${#packages[@]}
+    if [ "$packages_count" -gt 0 ] && [ ! -z "${packages[0]}" ]
+    then
+        if [ ! -z "$desc" ]
+        then
+            info "$desc $module ($packages_count selected)..."
+        fi
+        call_module "$module" "$command" "${packages[@]}"
+    fi
+}
+
 command=$1
-shift
+shift || true
 case "$command" in
 
     bootstrap)
@@ -50,61 +65,55 @@ case "$command" in
             for module in $modulespath/*
             do
                 module=$(basename "$module")
-                packages=$(get_packages "$module")
-                if [ ! -z "$packages" ]
-                then
-                    echo "Bootstrapping $module ($(wc -l "$packages") selected..."
-                    call_module "$module" bootstrap
-                fi
+                call_module_for_all_packages "$module" bootstrap Bootstrapping
             done
         else
             check_module "$module"
-            call_module "$module" bootstrap
+            call_module_for_all_packages "$module" bootstrap Bootstrapping
         fi
         ;;
 
     diff)
-        module=${1:?"Please specify a module"}
+        module=$1
+        [ ! -z "$module" ] || error "Please specify a module"
         check_module "$module"
-        packages=$(get_packages "$module")
-        if [ ! -z "$packages" ]
-        then
-            call_module "$module" diff "$packages"
-        fi
+        call_module_for_all_packages "$module" diff
         ;;
 
     edit)
-        module=${1:?"Please specify a module"}
-        tag=${2:?"Please specify a tag"}
+        module=$1
+        [ ! -z "$module" ] || error "Please specify a module"
+        tag=$2
+        [ ! -z "$tag" ] || error "Please specify a tag"
         check_module "$module"
         packages_file=$tagspath/$tag/packages/$module
         open_in_editor "$packages_file"
         ;;
 
     install)
-        module=${1:?"Please specify a module"}
-        shift
-        tag=${1:?"Please specify a tag"}
-        shift
+        module=$1
+        [ ! -z "$module" ] || error "Please specify a module"
+        tag=$2
+        [ ! -z "$tag" ] || error "Please specify a tag"
+        shift 2
         if [ -z "$1" ]
         then
-            echo "Please specify at least one package to install" 1>&2
-            exit 2
+            error "Please specify at least one package to install"
         fi
         check_module "$module"
         packagespath=$tagspath/$tag/packages
         packagesfile=$packagespath/$module
         mkdir -p "$packagespath"
         touch "$packagesfile"
-        packages=$(cat "$packagesfile")
+        packages_str=$(cat "$packagesfile")
         if call_module "$module" install "$@"
         then
             for p in "$@"
             do
                 desc=$(call_module "$module" desc "$p")
-                packages=$(echo -e "$packages\\n$p # $desc" | sort | uniq)
+                packages_str=$(echo -e "$packages_str\\n$p # $desc" | sort | uniq)
             done
-            echo "$packages" > "$packagesfile"
+            echo "$packages_str" > "$packagesfile"
         fi
         ;;
 
@@ -115,32 +124,21 @@ case "$command" in
             for module in $modulespath/*
             do
                 module=$(basename "$module")
-                packages=$(get_packages "$module")
-                if [ ! -z "$packages" ]
-                then
-                    echo "Syncing $module ($(wc -l "$packages") selected..."
-                    call_module "$module" sync "$packages"
-                fi
+                call_module_for_all_packages "$module" sync Syncing
             done
         else
             check_module "$module"
-            packages=$(get_packages "$module")
-            if [ ! -z "$packages" ]
-            then
-                call_module "$module" sync "$packages"
-            fi
+            call_module_for_all_packages "$module" sync Syncing
         fi
         ;;
 
     uninstall)
         module=${1:?"Please specify a module"}
-        shift
-        tag=${1:?"Please specify a tag"}
-        shift
+        tag=${2:?"Please specify a tag"}
+        shift 2
         if [ -z "$1" ]
         then
-            echo "Please specify at least one package to install" 1>&2
-            exit 2
+            error "Please specify at least one package to install"
         fi
         check_module "$module"
         call_module "$module" uninstall "$@"
@@ -148,12 +146,12 @@ case "$command" in
         packagesfile=$packagespath/$module
         if [ -f "$packagesfile" ]
         then
-            packages=$(cat "$packagesfile")
+            packages_str=$(cat "$packagesfile")
             for p in "$@"
             do
-                packages=$(echo "$packages" | grep -v -e "^$p #")
+                packages_str=$(echo "$packages_str" | grep -v -e "^$p #")
             done
-            echo "$packages" > "$packagesfile"
+            echo "$packages_str" > "$packagesfile"
         fi
         ;;
 
@@ -164,20 +162,11 @@ case "$command" in
             for module in $modulespath/*
             do
                 module=$(basename "$module")
-                packages=$(get_packages "$module")
-                if [ ! -z "$packages" ]
-                then
-                    echo "Updating $module ($(wc -l "$packages") selected..."
-                    call_module "$module" update "$packages"
-                fi
+                call_module_for_all_packages "$module" update Updating
             done
         else
             check_module "$module"
-            packages=$(get_packages "$module")
-            if [ ! -z "$packages" ]
-            then
-                call_module "$module" update "$packages"
-            fi
+            call_module_for_all_packages "$module" update Updating
         fi
         ;;
 

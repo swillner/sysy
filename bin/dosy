@@ -42,17 +42,13 @@ sync_file () {
     local file=$2
     if [ ! -e "$local_file" ]
     then
-        echo "$local_file not found" 1>&2
-        exit 2
+        error "$local_file not found"
     fi
-    if [ ! -e "$file" ] || [ "$(realpath "$file")" != "$local_file" ]
-    then
-        ln -si "$local_file" "$file"
-    fi
+    ensure_link "$local_file" "$file"
 }
 
 command=$1
-shift
+shift || true
 case "$command" in
 
     add)
@@ -60,8 +56,7 @@ case "$command" in
         file=$2
         if [ ! -e "$file" ]
         then
-            echo "Please specify a tag and a file or directory" 1>&2
-            exit 2
+            error "Please specify a tag and a file or directory"
         fi
         custom_file=$3
         if [ -z "$custom_file" ]
@@ -69,16 +64,14 @@ case "$command" in
             file=$(realpath --relative-to "$HOME" "$file")
             if [ "$(dirname "$file")" != "." ] || [ "${file:0:1}" != "." ] || [ "$file" == "." ]
             then
-                echo "This is not a dotfile" 1>&2
-                exit 2
+                error "This is not a dotfile"
             fi
             undotted_file=${file:1}
             dotfilespath=$tagspath/$tag/dotfiles
             local_file=$dotfilespath/$undotted_file
             if [ -f "$local_file" ]
             then
-                echo "$file is already handled by dosy with tag $tag" 1>&2
-                exit 2
+                error "$file is already handled by dosy with tag $tag"
             fi
             mkdir -p "$dotfilespath"
             mv "$HOME/$file" "$local_file"
@@ -118,8 +111,7 @@ case "$command" in
         file=$1
         if [ ! -e "$file" ]
         then
-            echo "Please specify a file or directory" 1>&2
-            exit 2
+            error "Please specify a file or directory"
         fi
         local_file=$(realpath --relative-to "$HOME" "$file")
         tag=$(find_local_file_tag "$local_file" "files")
@@ -132,13 +124,12 @@ case "$command" in
             then
                 local_file=$tagspath/$tag/dotfiles/$local_file
             else
-                echo "$file not handled by dosy" 1>&2
-                exit 2
+                error "$file not handled by dosy"
             fi
         fi
         if [ "$(realpath "$file")" != "$local_file" ]
         then
-            echo "$file not currently synced" 1>&2
+            info "$file not currently synced"
             if ask_user "Delete handle anyway?" "n"
             then
                 rm -rfi "$local_file"

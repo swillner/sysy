@@ -1,13 +1,19 @@
 #!/usr/bin/env bash
 set -e
-command=$1
-shift
 
+command=$1
+shift || true
 case "$command" in
 
     bootstrap)
-        sudo apt-get install python2
-        curl -s https://bootstrap.pypa.io/get-pip.py | python2 - --user
+        if ! which python2 >/dev/null 2>/dev/null
+        then
+            sudo apt-get install python2
+        fi
+        if ! which pip2 >/dev/null 2>/dev/null
+        then
+            curl -s https://bootstrap.pypa.io/get-pip.py | python2 - --user
+        fi
         ;;
 
     desc)
@@ -15,23 +21,19 @@ case "$command" in
         ;;
 
     install)
-        packages=$1
-        pip2 install --user "$packages"
+        pip2 install --user "$@"
         ;;
 
     sync)
-        packages=$1
-        pip2 install --user "$packages"
+        pip2 install --user "$@"
         ;;
 
     uninstall)
-        packages=$1
-        pip2 uninstall "$packages"
+        pip2 uninstall "$@"
         ;;
 
     update)
-        packages=$1
-        pip2 install --user --upgrade "$packages"
+        pip2 install --user --upgrade "$@"
         ;;
 
     *)

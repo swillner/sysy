@@ -1,0 +1,73 @@
+#!/usr/bin/env bash
+set -e
+
+
+if ! which realpath >/dev/null 2>/dev/null
+then
+    echo "Could not find realpath executable" 1>&2
+    sudo apt-get install coreutils
+fi
+
+if ! which diff >/dev/null 2>/dev/null
+then
+    echo "Could not find diff executable" 1>&2
+    sudo apt-get install diffutils
+fi
+
+scriptpath=$(dirname "$(realpath "$0")")
+confdir=$HOME/.dosy.d
+dosydir=$(dirname "$scriptpath")
+
+# shellcheck source=/home/sven/sync/dosy/scripts/include.sh
+source "$scriptpath/../scripts/include.sh"
+
+command=$1
+shift || true
+case "$command" in
+
+    bootstrap)
+        mkdir -p "$confdir"
+        ensure_link "$dosydir/bin" "$confdir/bin"
+        touch "$confdir/tags"
+        if ask_user "Edit tags now?" "y"
+        then
+            open_in_editor "$confdir/tags"
+        fi
+
+        info "Syncing system configuration..."
+        bash "$dosydir/bin/cosy" sync
+        info "Bootstrapping packages..."
+        bash "$dosydir/bin/pasy" bootstrap
+        info "Syncing packages..."
+        bash "$dosydir/bin/pasy" sync
+        info "Syncing dotfiles..."
+        bash "$dosydir/bin/dosy" sync
+        ;;
+
+    sync)
+        info "Syncing system configuration..."
+        bash "$dosydir/bin/cosy" sync
+        info "Syncing packages..."
+        bash "$dosydir/bin/pasy" sync
+        info "Syncing dotfiles..."
+        bash "$dosydir/bin/dosy" sync
+        ;;
+
+    *)
+        cat <<EOF
+sysy - system synchronization
+
+Usage:
+
+    $0 COMMAND [ARGUMENTS]
+
+Commands:
+
+    bootstrap                   bootstrap
+    sync                        synchronize
+
+EOF
+        exit 1
+        ;;
+
+esac

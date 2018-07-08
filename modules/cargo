@@ -1,12 +1,15 @@
 #!/usr/bin/env bash
 set -e
-command=$1
-shift
 
+command=$1
+shift || true
 case "$command" in
 
     bootstrap)
-        sudo apt-get install cargo
+        if ! which cargo >/dev/null 2>/dev/null
+        then
+            sudo apt-get install cargo
+        fi
         ;;
 
     desc)
@@ -14,9 +17,8 @@ case "$command" in
         ;;
 
     install)
-        packages=$1
         already_installed=$(cargo install --list)
-        for p in $packages
+        for p in "$@"
         do
             if ! echo "$already_installed" | grep "^$p " >/dev/null
             then
@@ -29,9 +31,8 @@ case "$command" in
         ;;
 
     sync)
-        packages=$1
         already_installed=$(cargo install --list)
-        for p in $packages
+        for p in "$@"
         do
             if ! echo "$already_installed" | grep "^$p " >/dev/null
             then
@@ -44,8 +45,7 @@ case "$command" in
         ;;
 
     uninstall)
-        packages=$1
-        for p in $packages
+        for p in "$@"
         do
             cargo uninstall "$p"
         done
