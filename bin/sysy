@@ -1,7 +1,6 @@
 #!/usr/bin/env bash
 set -e
 
-
 if ! which realpath >/dev/null 2>/dev/null
 then
     echo "Could not find realpath executable" 1>&2
@@ -15,8 +14,10 @@ then
 fi
 
 scriptpath=$(dirname "$(realpath "$0")")
-confdir=$HOME/.dosy.d
+confdir=$HOME/.sysy.d
 dosydir=$(dirname "$scriptpath")
+tagsfile=$confdir/tags
+tagspath=$(realpath "$scriptpath/../tags")
 
 # shellcheck source=/home/sven/sync/dosy/scripts/include.sh
 source "$scriptpath/../scripts/include.sh"
@@ -29,19 +30,33 @@ case "$command" in
         mkdir -p "$confdir"
         ensure_link "$dosydir/bin" "$confdir/bin"
         touch "$confdir/tags"
-        if ask_user "Edit tags now?" "y"
+        if ask_user "Edit tags now?" "y" && open_in_editor "$confdir/tags"
         then
-            open_in_editor "$confdir/tags"
-        fi
+            info "Invoking pre-bootstrap scripts..."
+            while IFS= read -r tag
+            do
+                script=$tagspath/$tag/pre-bootstrap.sh
+                [ -f "$script" ] && bash "$script"
+            done < "$tagsfile"
 
-        info "Syncing system configuration..."
-        bash "$dosydir/bin/cosy" sync
-        info "Bootstrapping packages..."
-        bash "$dosydir/bin/pasy" bootstrap
-        info "Syncing packages..."
-        bash "$dosydir/bin/pasy" sync
-        info "Syncing dotfiles..."
-        bash "$dosydir/bin/dosy" sync
+            info "Syncing system configuration..."
+            bash "$dosydir/bin/cosy" sync
+            info "Bootstrapping packages..."
+            bash "$dosydir/bin/pasy" bootstrap
+            info "Syncing packages..."
+            bash "$dosydir/bin/pasy" sync
+            info "Syncing dotfiles..."
+            bash "$dosydir/bin/dosy" sync
+
+            info "Invoking post-bootstrap scripts..."
+            while IFS= read -r tag
+            do
+                script=$tagspath/$tag/post-bootstrap.sh
+                [ -f "$script" ] && bash "$script"
+            done < "$tagsfile"
+        else
+            info "Please run $0 sync again after editing"
+        fi
         ;;
 
     sync)

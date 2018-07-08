@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -e
 scriptpath=$(dirname "$(realpath "$0")")
-confdir=$HOME/.dosy.d
+confdir=$HOME/.sysy.d
 tagsfile=$confdir/tags
 tagspath=$(realpath "$scriptpath/../tags")
 modulespath=$(realpath "$scriptpath/../modules")
