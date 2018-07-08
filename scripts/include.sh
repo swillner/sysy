@@ -40,7 +40,7 @@ ask_user () {
     fi
     local response
     echo -e -n "$COLOR_ORANGE$question$COLOR_CLEAR $COLOR_LIGHT_GRAY$default_indicator$COLOR_CLEAR "
-    read -r response
+    read -r response < /dev/tty
     case $response in
         [yY][eE][sS]|[yY]|'')
             if [ "$default" != "y" ] && [ "$response" == "" ]
@@ -68,9 +68,15 @@ ensure_link () {
         then
             if [ "$real" == "$to" ]
             then
-                ask_user "Replace $to by link to $from?" "y"
+                if ask_user "Replace $to by link to $from?" "y"
+                then
+                    ln -sf "$from" "$to"
+                fi
             else
-                ask_user "Replace $to by link to $from (currently to $real)?" "y"
+                if ask_user "Replace $to by link to $from (currently to $real)?" "y"
+                then
+                    ln -sf "$from" "$to"
+                fi
             fi
         fi
     fi

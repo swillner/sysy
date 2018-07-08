@@ -3,8 +3,8 @@ set -e
 scriptpath=$(dirname "$(realpath "$0")")
 confdir=$HOME/.dosy.d
 tagsfile=$confdir/tags
-tagspath=$scriptpath/../tags
-modulespath=$scriptpath/../modules
+tagspath=$(realpath "$scriptpath/../tags")
+modulespath=$(realpath "$scriptpath/../modules")
 
 # shellcheck source=/home/sven/sync/dosy/scripts/include.sh
 source "$scriptpath/../scripts/include.sh"

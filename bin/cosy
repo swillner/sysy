@@ -3,7 +3,7 @@ set -e
 scriptpath=$(dirname "$(realpath "$0")")
 confdir=$HOME/.dosy.d
 tagsfile=$confdir/tags
-tagspath=$scriptpath/../tags
+tagspath=$(realpath "$scriptpath/../tags")
 
 if which icdiff >/dev/null 2>/dev/null
 then
@@ -112,7 +112,7 @@ case "$command" in
         local_file=$(find_local_file "$system_file")
         if [ ! -e "$local_file" ]
         then
-            read -r -p "Tag: " tag
+            read -r -p "Tag: " tag < /dev/tty
             add_file "$tag" "$system_file"
         fi
         if open_in_editor "$local_file"

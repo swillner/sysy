@@ -3,7 +3,7 @@ set -e
 scriptpath=$(dirname "$(realpath "$0")")
 confdir=$HOME/.dosy.d
 tagsfile=$confdir/tags
-tagspath=$scriptpath/../tags
+tagspath=$(realpath "$scriptpath/../tags")
 
 # shellcheck source=/home/sven/sync/dosy/scripts/include.sh
 source "$scriptpath/../scripts/include.sh"
@@ -19,7 +19,7 @@ add_custom_file () {
     ln -s "$(realpath "$absolute_custom_file")" "$file"
     local custompath=$tagspath/$tag/custom
     local relative_file
-    relative_file=$(realpath --relative-base "$HOME" "$file") # absolute path if not under home
+    relative_file=$(realpath --no-symlinks --relative-base "$HOME" "$file") # absolute path if not under home
     echo "$custom_file;$relative_file" >> "$custompath"
 }
 
@@ -29,7 +29,7 @@ find_local_file_tag () {
     while IFS= read -r tag
     do
         this_local_file=$tagspath/$tag/$type/$local_file
-        if [ -f "$this_local_file" ]
+        if [ -e "$this_local_file" ]
         then
             echo "$tag"
             return
@@ -58,13 +58,17 @@ case "$command" in
         then
             error "Please specify a tag and a file or directory"
         fi
+        if [ -L "$file" ]
+        then
+            error "$file is a symlink"
+        fi
         custom_file=$3
         if [ -z "$custom_file" ]
         then
             file=$(realpath --relative-to "$HOME" "$file")
             if [ "$(dirname "$file")" != "." ] || [ "${file:0:1}" != "." ] || [ "$file" == "." ]
             then
-                error "This is not a dotfile"
+                error "$file is not a dotfile"
             fi
             undotted_file=${file:1}
             dotfilespath=$tagspath/$tag/dotfiles
@@ -87,23 +91,29 @@ case "$command" in
             filespath=$tagspath/$tag/dotfiles
             for local_file in $filespath/*
             do
-                local_file=$(realpath --relative-to "$filespath" "$local_file")
-                file=$HOME/.$local_file
-                local_file=$tagspath/$(find_local_file_tag "$local_file" "dotfiles")/dotfiles/$local_file
-                sync_file "$local_file" "$file"
+                if [ -e "$local_file" ]
+                then
+                    local_file=$(realpath --relative-to "$filespath" "$local_file")
+                    file=$HOME/.$local_file
+                    local_file=$tagspath/$(find_local_file_tag "$local_file" "dotfiles")/dotfiles/$local_file
+                    sync_file "$local_file" "$file"
+                fi
             done
             custompath=$tagspath/$tag/custom
-            filespath=$tagspath/$tag/files
-            while IFS= read -r line
-            do
-                custom_file=$(echo "$line" | cut -f 1 -d ';')
-                file=$(echo "$line" | cut -f 2 -d ';')
-                if [ "${file:0:1}" != "/" ]
-                then
-                    file=$HOME/$file
-                fi
-                sync_file "$filespath/$custom_file" "$file"
-            done < "$custompath"
+            if [ -f "$custompath" ]
+            then
+                filespath=$tagspath/$tag/files
+                while IFS= read -r line
+                do
+                    custom_file=$(echo "$line" | cut -f 1 -d ';')
+                    file=$(echo "$line" | cut -f 2 -d ';')
+                    if [ "${file:0:1}" != "/" ]
+                    then
+                        file=$HOME/$file
+                    fi
+                    sync_file "$filespath/$custom_file" "$file"
+                done < "$custompath"
+            fi
         done < "$tagsfile"
         ;;
 
@@ -113,18 +123,23 @@ case "$command" in
         then
             error "Please specify a file or directory"
         fi
-        local_file=$(realpath --relative-to "$HOME" "$file")
+        local_file=$(realpath --no-symlinks --relative-to "$HOME" "$file")
         tag=$(find_local_file_tag "$local_file" "files")
         if [ ! -z "$tag" ]
         then
             local_file=$tagspath/$tag/files/$local_file
         else
-            tag=$(find_local_file_tag "$local_file" "dotfiles")
+            if [ "$(dirname "$local_file")" != "." ] || [ "${local_file:0:1}" != "." ] || [ "$local_file" == "." ]
+            then
+                error "$local_file is not a dotfile or not handled by dosy"
+            fi
+            undotted_file=${local_file:1}
+            tag=$(find_local_file_tag "$undotted_file" "dotfiles")
             if [ ! -z "$tag" ]
             then
-                local_file=$tagspath/$tag/dotfiles/$local_file
+                local_file=$tagspath/$tag/dotfiles/$undotted_file
             else
-                error "$file not handled by dosy"
+                error "$local_file not handled by dosy"
             fi
         fi
         if [ "$(realpath "$file")" != "$local_file" ]
