@@ -36,7 +36,7 @@ case "$command" in
             while IFS= read -r tag
             do
                 script=$tagspath/$tag/pre-bootstrap.sh
-                [ -f "$script" ] && bash "$script"
+                [ -f "$script" ] && SYSYDIR=$sysydir bash "$script"
             done < "$tagsfile"
 
             info "Syncing system configuration..."
@@ -52,7 +52,7 @@ case "$command" in
             while IFS= read -r tag
             do
                 script=$tagspath/$tag/post-bootstrap.sh
-                [ -f "$script" ] && bash "$script"
+                [ -f "$script" ] && SYSYDIR=$sysydir bash "$script"
             done < "$tagsfile"
         else
             info "Please run $0 sync again after editing"

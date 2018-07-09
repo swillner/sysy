@@ -56,6 +56,20 @@ ask_user () {
     esac
 }
 
+ask_run () {
+    cmd=$1
+    desc=$2
+    if [ ! -z "$desc" ]
+    then
+        desc=" ($desc)"
+    fi
+    echo -e "${COLOR_ORANGE}Would run$desc\\n$COLOR_YELLOW  $cmd$COLOR_RESET"
+    if ask_user "Run?" "y"
+    then
+        eval "$cmd"
+    fi
+}
+
 ensure_link () {
     local from=$1
     local to=$2
