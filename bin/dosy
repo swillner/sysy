@@ -5,7 +5,7 @@ confdir=$HOME/.sysy.d
 tagsfile=$confdir/tags
 tagspath=$(realpath "$scriptpath/../tags")
 
-# shellcheck source=/home/sven/sync/dosy/scripts/include.sh
+# shellcheck source=/home/sven/sync/sysy/scripts/include.sh
 source "$scriptpath/../scripts/include.sh"
 
 add_custom_file () {

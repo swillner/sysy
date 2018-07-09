@@ -6,7 +6,7 @@ tagsfile=$confdir/tags
 tagspath=$(realpath "$scriptpath/../tags")
 modulespath=$(realpath "$scriptpath/../modules")
 
-# shellcheck source=/home/sven/sync/dosy/scripts/include.sh
+# shellcheck source=/home/sven/sync/sysy/scripts/include.sh
 source "$scriptpath/../scripts/include.sh"
 
 call_module () {

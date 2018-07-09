@@ -15,11 +15,11 @@ fi
 
 scriptpath=$(dirname "$(realpath "$0")")
 confdir=$HOME/.sysy.d
-dosydir=$(dirname "$scriptpath")
+sysydir=$(dirname "$scriptpath")
 tagsfile=$confdir/tags
 tagspath=$(realpath "$scriptpath/../tags")
 
-# shellcheck source=/home/sven/sync/dosy/scripts/include.sh
+# shellcheck source=/home/sven/sync/sysy/scripts/include.sh
 source "$scriptpath/../scripts/include.sh"
 
 command=$1
@@ -28,7 +28,7 @@ case "$command" in
 
     bootstrap)
         mkdir -p "$confdir"
-        ensure_link "$dosydir/bin" "$confdir/bin"
+        ensure_link "$sysydir/bin" "$confdir/bin"
         touch "$confdir/tags"
         if ask_user "Edit tags now?" "y" && open_in_editor "$confdir/tags"
         then
@@ -40,13 +40,13 @@ case "$command" in
             done < "$tagsfile"
 
             info "Syncing system configuration..."
-            bash "$dosydir/bin/cosy" sync
+            bash "$sysydir/bin/cosy" sync
             info "Bootstrapping packages..."
-            bash "$dosydir/bin/pasy" bootstrap
+            bash "$sysydir/bin/pasy" bootstrap
             info "Syncing packages..."
-            bash "$dosydir/bin/pasy" sync
+            bash "$sysydir/bin/pasy" sync
             info "Syncing dotfiles..."
-            bash "$dosydir/bin/dosy" sync
+            bash "$sysydir/bin/dosy" sync
 
             info "Invoking post-bootstrap scripts..."
             while IFS= read -r tag
@@ -61,11 +61,11 @@ case "$command" in
 
     sync)
         info "Syncing system configuration..."
-        bash "$dosydir/bin/cosy" sync
+        bash "$sysydir/bin/cosy" sync
         info "Syncing packages..."
-        bash "$dosydir/bin/pasy" sync
+        bash "$sysydir/bin/pasy" sync
         info "Syncing dotfiles..."
-        bash "$dosydir/bin/dosy" sync
+        bash "$sysydir/bin/dosy" sync
         ;;
 
     *)
