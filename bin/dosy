@@ -105,13 +105,34 @@ case "$command" in
                 filespath=$tagspath/$tag/files
                 while IFS= read -r line
                 do
-                    custom_file=$(echo "$line" | cut -f 1 -d ';')
-                    file=$(echo "$line" | cut -f 2 -d ';')
+                    readarray -d ';' -t args <<< "$line;"
+                    if [ "${#args[@]}" -lt 3 ]
+                    then
+                        error "Corrupt line in $custompath"
+                    fi
+                    custom_file=${args[0]}
+                    file=${args[1]}
                     if [ "${file:0:1}" != "/" ]
                     then
                         file=$HOME/$file
                     fi
-                    sync_file "$filespath/$custom_file" "$file"
+                    if [ "${#args[@]}" == 4 ] && [ "${args[2]}" == "sub" ]
+                    then
+                        if [ -L "$file" ]
+                        then
+                            error "$file is a link"
+                        fi
+                        mkdir -p "$file"
+                        for f in $filespath/$custom_file/*
+                        do
+                            if [ -e "$f" ]
+                            then
+                                sync_file "$f" "$file/$(basename "$f")"
+                            fi
+                        done
+                    else
+                        sync_file "$filespath/$custom_file" "$file"
+                    fi
                 done < "$custompath"
             fi
         done < "$tagsfile"
