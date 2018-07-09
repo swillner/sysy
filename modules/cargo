@@ -8,7 +8,12 @@ case "$command" in
     bootstrap)
         if ! which cargo >/dev/null 2>/dev/null
         then
-            sudo apt-get install cargo
+            if sudo -l -n
+            then
+                sudo apt-get install cargo
+            else
+                curl -s https://static.rust-lang.org/rustup.sh | sh - --disable-sudo --prefix="$HOME/.local"
+            fi
         fi
         ;;
 

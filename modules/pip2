@@ -21,11 +21,11 @@ case "$command" in
         ;;
 
     install)
-        pip2 install --user "$@"
+        pip2 install -q --progress-bar=pretty --user "$@"
         ;;
 
     sync)
-        pip2 install --user "$@"
+        pip2 install -q --progress-bar=pretty --user "$@"
         ;;
 
     uninstall)
@@ -33,7 +33,7 @@ case "$command" in
         ;;
 
     update)
-        pip2 install --user --upgrade "$@"
+        pip2 install -q --progress-bar=pretty --user --upgrade "$@"
         ;;
 
     *)
