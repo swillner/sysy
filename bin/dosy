@@ -115,7 +115,7 @@ case "$command" in
                 then
                     local_file=$(realpath --relative-to "$filespath" "$local_file")
                     file=$HOME/.$local_file
-                    local_file=$tagspath/$(find_local_file_tag "$local_file")/dotfiles/$local_file
+                    local_file=$tagspath/$tag/dotfiles/$local_file
                     sync_file "$local_file" "$file"
                 fi
             done
