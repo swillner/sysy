@@ -89,7 +89,8 @@ ensure_link () {
             else
                 if ask_user "Replace $to by link to $from (currently to $real)?" "y"
                 then
-                    ln -sf "$from" "$to"
+                    rm "$to"
+                    ln -s "$from" "$to"
                 fi
             fi
         fi
