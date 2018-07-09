@@ -61,7 +61,7 @@ ensure_link () {
     local to=$2
     if [ ! -e "$to" ]
     then
-        ln -s "$from" "$to"
+        ln -sf "$from" "$to"
     else
         real=$(realpath "$to")
         if [ "$real" != "$from" ]
