@@ -14,7 +14,7 @@ call_module () {
     local command=$2
     shift 2
     local modulefile=$modulespath/$module
-    bash "$modulefile" "$command" "$@"
+    source "$modulefile" "$command" "$@"
 }
 
 check_module () {

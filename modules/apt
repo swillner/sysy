@@ -14,6 +14,7 @@ case "$command" in
     bootstrap)
         if ! which aptitude >/dev/null 2>/dev/null
         then
+            info "Installing aptitude..."
             sudo apt-get install aptitude
         fi
         ;;

@@ -8,6 +8,7 @@ case "$command" in
     bootstrap)
         if ! which go >/dev/null 2>/dev/null
         then
+            info "Installing go..."
             sudo apt-get install golang-go
         fi
         ;;

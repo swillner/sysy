@@ -8,6 +8,7 @@ case "$command" in
     bootstrap)
         if ! which python3 >/dev/null 2>/dev/null
         then
+            info "Installing python3..."
             sudo apt-get install python3
         fi
         if ! which pip3 >/dev/null 2>/dev/null
@@ -21,11 +22,11 @@ case "$command" in
         ;;
 
     install)
-        pip3 install -q --progress-bar=pretty --user "$@"
+        pip3 install --progress-bar=pretty --user "$@"
         ;;
 
     sync)
-        pip3 install -q --progress-bar=pretty --user "$@"
+        pip3 install --progress-bar=pretty --user "$@"
         ;;
 
     uninstall)
@@ -33,7 +34,7 @@ case "$command" in
         ;;
 
     update)
-        pip3 install -q --progress-bar=pretty --user --upgrade "$@"
+        pip3 install --progress-bar=pretty --user --upgrade "$@"
         ;;
 
     *)

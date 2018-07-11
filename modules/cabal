@@ -8,6 +8,7 @@ case "$command" in
     bootstrap)
         if ! which cabal >/dev/null 2>/dev/null
         then
+            info "Installing cabal..."
             sudo apt-get install cabal-install
         fi
         ;;

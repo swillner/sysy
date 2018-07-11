@@ -8,6 +8,7 @@ case "$command" in
     bootstrap)
         if ! which npm >/dev/null 2>/dev/null
         then
+            info "Installing npm..."
             sudo apt-get install npm
         fi
         ;;
