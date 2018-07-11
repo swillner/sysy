@@ -56,9 +56,9 @@ sync_file () {
     fi
     if sudo ls "$system_file" >/dev/null 2>/dev/null
     then
-        if ! sudo diff "$local_file" "$system_file" >/dev/null 2>/dev/null
+        if ! sudo diff "$system_file" "$local_file" >/dev/null 2>/dev/null
         then
-            sudo "$nicediff" "$local_file" "$system_file" | less -X -F
+            sudo "$nicediff" "$system_file" "$local_file" | less -X -F
             if ask_user "Update file?" "y"
             then
                 sudo cat "$local_file" | sudo tee "$system_file" >/dev/null
