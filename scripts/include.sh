@@ -32,7 +32,7 @@ ask_user () {
     local question=$1
     local default=$2
     local default_indicator
-    if [ "$default" = "y" ]
+    if [[ "$default" = "y" ]]
     then
         default_indicator="[Y/n]"
     else
@@ -43,7 +43,7 @@ ask_user () {
     read -r response < /dev/tty
     case $response in
         [yY][eE][sS]|[yY]|'')
-            if [ "$default" != "y" ] && [ "$response" == "" ]
+            if [[ "$default" != "y" && "$response" == "" ]]
             then
                 return 1
             else
@@ -59,10 +59,7 @@ ask_user () {
 ask_run () {
     cmd=$1
     desc=$2
-    if [ ! -z "$desc" ]
-    then
-        desc=" ($desc)"
-    fi
+    [[ -z "$desc" ]] || desc=" ($desc)"
     echo -e "${COLOR_ORANGE}Would run$desc\\n$COLOR_YELLOW  $cmd$COLOR_RESET"
     if ask_user "Run?" "y"
     then
@@ -73,14 +70,14 @@ ask_run () {
 ensure_link () {
     local from=$1
     local to=$2
-    if [ ! -e "$to" ]
+    if [[ ! -e "$to" ]]
     then
         ln -sf "$from" "$to"
     else
         real=$(realpath "$to")
-        if [ "$real" != "$from" ]
+        if [[ "$real" != "$from" ]]
         then
-            if [ "$real" == "$to" ]
+            if [[ "$real" == "$to" ]]
             then
                 if ask_user "Replace $to by link to $from?" "y"
                 then
@@ -100,7 +97,7 @@ ensure_link () {
 ensure_command () {
     local command=$1
     local package=${2:-$command}
-    if ! which "$command" >/dev/null 2>/dev/null
+    if ! command -v "$command" >/dev/null 2>/dev/null
     then
         echo "Could not find $command executable" 1>&2
         if ask_user "Install $package package now?" "y"
@@ -114,11 +111,11 @@ ensure_command () {
 }
 
 open_in_editor () {
-    if [ ! -z "$VISUAL" ]
+    if [[ -n "$VISUAL" ]]
     then
         $VISUAL "$@"
     else
-        if [ ! -z "$EDITOR" ]
+        if [[ -n "$EDITOR" ]]
         then
             $EDITOR "$@"
         else

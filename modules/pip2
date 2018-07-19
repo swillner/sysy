@@ -6,12 +6,12 @@ shift || true
 case "$command" in
 
     bootstrap)
-        if ! which python2 >/dev/null 2>/dev/null
+        if ! command -v python2 >/dev/null 2>/dev/null
         then
             info "Installing python2..."
             sudo apt-get install python2
         fi
-        if ! which pip2 >/dev/null 2>/dev/null
+        if ! command -v pip2 >/dev/null 2>/dev/null
         then
             curl -s https://bootstrap.pypa.io/get-pip.py | python2 - --user
         fi

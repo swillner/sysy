@@ -6,12 +6,12 @@ shift || true
 case "$command" in
 
     bootstrap)
-        if ! which python3 >/dev/null 2>/dev/null
+        if ! command -v python3 >/dev/null 2>/dev/null
         then
             info "Installing python3..."
             sudo apt-get install python3
         fi
-        if ! which pip3 >/dev/null 2>/dev/null
+        if ! command -v pip3 >/dev/null 2>/dev/null
         then
             curl -s https://bootstrap.pypa.io/get-pip.py | python3 - --user
         fi

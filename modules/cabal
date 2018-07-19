@@ -6,7 +6,7 @@ shift || true
 case "$command" in
 
     bootstrap)
-        if ! which cabal >/dev/null 2>/dev/null
+        if ! command -v cabal >/dev/null 2>/dev/null
         then
             info "Installing cabal..."
             sudo apt-get install cabal-install

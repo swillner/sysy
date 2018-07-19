@@ -6,7 +6,7 @@ shift || true
 case "$command" in
 
     bootstrap)
-        if ! which cargo >/dev/null 2>/dev/null
+        if ! command -v cargo >/dev/null 2>/dev/null
         then
             if ask_user "Install cargo via apt-get?" "n"
             then

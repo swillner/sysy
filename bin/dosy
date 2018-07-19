@@ -28,7 +28,7 @@ find_local_file_tag () {
     while IFS= read -r tag
     do
         this_local_file=$tagspath/$tag/dotfiles/$local_file
-        if [ -e "$this_local_file" ]
+        if [[ -e "$this_local_file" ]]
         then
             echo "$tag"
             return
@@ -39,25 +39,15 @@ find_local_file_tag () {
 sync_file () {
     local local_file=$1
     local file=$2
-    if [ ! -e "$local_file" ]
+    [[ -e "$local_file" ]] || error "$local_file not found"
+    if [[ -d "$local_file" && -e "$local_file/.sub" ]]
     then
-        error "$local_file not found"
-    fi
-    if [ -d "$local_file" ] && [ -e "$local_file/.sub" ]
-    then
-        if [ -L "$file" ]
-        then
-            error "$file is a link"
-        fi
-        if [ -f "$file" ]
-        then
-            error "$file is a file, but expected a directory"
-        fi
+        [[ ! -L "$file" ]] || error "$file is a link"
         mkdir -p "$file"
         for f in $local_file/*
         do
             base=$(basename "$f")
-            if [ "$base" != ".sub" ]
+            if [[ "$base" != ".sub" ]]
             then
                 sync_file "$f" "$file/$base"
             fi
@@ -74,29 +64,17 @@ case "$command" in
     add)
         tag=$1
         file=$2
-        if [ ! -e "$file" ]
-        then
-            error "Please specify a tag and a file or directory"
-        fi
-        if [ -L "$file" ]
-        then
-            error "$file is a symlink"
-        fi
+        [[ -e "$file" ]] || error "Please specify a tag and a file or directory"
+        [[ ! -L "$file" ]] || error "$file is a symlink"
         custom_file=$3
-        if [ -z "$custom_file" ]
+        if [[ -z "$custom_file" ]]
         then
             file=$(realpath --relative-to "$HOME" "$file")
-            if [ "$(dirname "$file")" != "." ] || [ "${file:0:1}" != "." ] || [ "$file" == "." ]
-            then
-                error "$file is not a dotfile"
-            fi
+            [[ "$(dirname "$file")" == "." && "${file:0:1}" == "." && "$file" != "." ]] || error "$file is not a dotfile"
             undotted_file=${file:1}
             dotfilespath=$tagspath/$tag/dotfiles
             local_file=$dotfilespath/$undotted_file
-            if [ -f "$local_file" ]
-            then
-                error "$file is already handled by dosy with tag $tag"
-            fi
+            [[ ! -f "$local_file" ]] || error "$file is already handled by dosy with tag $tag"
             mkdir -p "$dotfilespath"
             mv "$HOME/$file" "$local_file"
             ln -s "$(realpath "$local_file")" "$HOME/$file"
@@ -111,7 +89,7 @@ case "$command" in
             filespath=$tagspath/$tag/dotfiles
             for local_file in $filespath/*
             do
-                if [ -e "$local_file" ]
+                if [[ -e "$local_file" ]]
                 then
                     local_file=$(realpath --relative-to "$filespath" "$local_file")
                     file=$HOME/.$local_file
@@ -120,22 +98,16 @@ case "$command" in
                 fi
             done
             custompath=$tagspath/$tag/custom
-            if [ -f "$custompath" ]
+            if [[ -f "$custompath" ]]
             then
                 filespath=$tagspath/$tag/files
                 while IFS= read -r line
                 do
                     readarray -d ';' -t args <<< "$line;"
-                    if [ "${#args[@]}" -lt 3 ]
-                    then
-                        error "Corrupt line in $custompath"
-                    fi
+                    [[ "${#args[@]}" -eq 3 ]] || error "Corrupt line in $custompath"
                     custom_file=${args[0]}
                     file=${args[1]}
-                    if [ "${file:0:1}" != "/" ]
-                    then
-                        file=$HOME/$file
-                    fi
+                    [[ "${file:0:1}" == "/" ]] || file=$HOME/$file
                     sync_file "$filespath/$custom_file" "$file"
                 done < "$custompath"
             fi
@@ -144,24 +116,14 @@ case "$command" in
 
     unhandle)
         file=$1
-        if [ ! -e "$file" ]
-        then
-            error "Please specify a file or directory"
-        fi
+        [[ -e "$file" ]] || error "Please specify a file or directory"
         local_file=$(realpath --no-symlinks --relative-to "$HOME" "$file")
-        if [ "$(dirname "$local_file")" != "." ] || [ "${local_file:0:1}" != "." ] || [ "$local_file" == "." ]
-        then
-            error "$local_file is not a dotfile or not handled by dosy"
-        fi
+        [[ "$(dirname "$local_file")" == "." && "${local_file:0:1}" == "." && "$local_file" != "." ]] ||  error "$local_file is not a dotfile or not handled by dosy"
         undotted_file=${local_file:1}
         tag=$(find_local_file_tag "$undotted_file")
-        if [ ! -z "$tag" ]
-        then
-            local_file=$tagspath/$tag/dotfiles/$undotted_file
-        else
-            error "$local_file not handled by dosy as a dotfile"
-        fi
-        if [ "$(realpath "$file")" != "$local_file" ]
+        [[ -n "$tag" ]] ||  error "$local_file not handled by dosy as a dotfile"
+        local_file=$tagspath/$tag/dotfiles/$undotted_file
+        if [[ "$(realpath "$file")" != "$local_file" ]]
         then
             info "$file not currently synced"
             if ask_user "Delete handle anyway?" "n"

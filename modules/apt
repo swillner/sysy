@@ -12,7 +12,7 @@ shift || true
 case "$command" in
 
     bootstrap)
-        if ! which aptitude >/dev/null 2>/dev/null
+        if ! command -v aptitude >/dev/null 2>/dev/null
         then
             info "Installing aptitude..."
             sudo apt-get install aptitude
@@ -36,18 +36,12 @@ case "$command" in
 
     sync)
         missing=$(comm -23 <(echo "$@" | sed 's/ /\n/g' | sort) <(dpkg-query -f '${binary:Package}\n' -W | sed 's/:amd64//g' | sort))
-        if [ ! -z "$missing" ]
-        then
-            sudo aptitude -q=3 install "$missing"
-        fi
+        [[ -z "$missing" ]] || sudo aptitude -q=3 install "$missing"
         to_remove=$(get_packages_to_remove "$@")
-        if [ ! -z "$to_remove" ]
+        if [[ -n "$to_remove" ]]
         then
             to_remove=$(sudo apt-get -qq -s purge "$to_remove" 2>/dev/null | cut -f2 -d ' ')
-            if [ ! -z "$to_remove" ]
-            then
-                sudo aptitude -q=3 purge "$to_remove"
-            fi
+            [[ -z "$to_remove" ]] || sudo aptitude -q=3 purge "$to_remove"
         fi
         ;;
 

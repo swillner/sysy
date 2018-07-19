@@ -20,10 +20,7 @@ call_module () {
 check_module () {
     local module=$1
     local modulefile=$modulespath/$module
-    if [ ! -f "$modulefile" ]
-    then
-        error "Module $module not found"
-    fi
+    [[ -f "$modulefile" ]] || error "Module $module not found"
 }
 
 get_packages () {
@@ -31,7 +28,7 @@ get_packages () {
     while IFS= read -r tag
     do
         packagesfile=$tagspath/$tag/packages/$module
-        if [ -f "$packagesfile" ]
+        if [[ -f "$packagesfile" ]]
         then
             grep -v -e "^#" < "$packagesfile" | cut -f1 -d' ' # | tr '\n' ' '
         fi
@@ -44,9 +41,9 @@ call_module_for_all_packages () {
     local desc=$3
     readarray -t packages <<< "$(get_packages "$module")"
     packages_count=${#packages[@]}
-    if [ "$packages_count" -gt 0 ] && [ ! -z "${packages[0]}" ]
+    if [[ "$packages_count" -gt 0 && -n "${packages[0]}" ]]
     then
-        if [ ! -z "$desc" ]
+        if [[ -n "$desc" ]]
         then
             info "$desc $module ($packages_count selected)..."
         fi
@@ -60,7 +57,7 @@ case "$command" in
 
     bootstrap)
         module=$1
-        if [ -z "$module" ]
+        if [[ -z "$module" ]]
         then
             for module in $modulespath/*
             do
@@ -75,16 +72,16 @@ case "$command" in
 
     diff)
         module=$1
-        [ ! -z "$module" ] || error "Please specify a module"
+        [[ -n "$module" ]] || error "Please specify a module"
         check_module "$module"
         call_module_for_all_packages "$module" diff
         ;;
 
     edit)
         module=$1
-        [ ! -z "$module" ] || error "Please specify a module"
+        [[ -n "$module" ]] || error "Please specify a module"
         tag=$2
-        [ ! -z "$tag" ] || error "Please specify a tag"
+        [[ -n "$tag" ]] || error "Please specify a tag"
         check_module "$module"
         packages_file=$tagspath/$tag/packages/$module
         open_in_editor "$packages_file"
@@ -92,14 +89,11 @@ case "$command" in
 
     install)
         module=$1
-        [ ! -z "$module" ] || error "Please specify a module"
+        [[ -n "$module" ]] || error "Please specify a module"
         tag=$2
-        [ ! -z "$tag" ] || error "Please specify a tag"
+        [[ -n "$tag" ]] || error "Please specify a tag"
         shift 2
-        if [ -z "$1" ]
-        then
-            error "Please specify at least one package to install"
-        fi
+        [[ -n "$1" ]] || error "Please specify at least one package to install"
         check_module "$module"
         packagespath=$tagspath/$tag/packages
         packagesfile=$packagespath/$module
@@ -119,7 +113,7 @@ case "$command" in
 
     sync)
         module=$1
-        if [ -z "$module" ]
+        if [[ -z "$module" ]]
         then
             for module in $modulespath/*
             do
@@ -133,18 +127,17 @@ case "$command" in
         ;;
 
     uninstall)
-        module=${1:?"Please specify a module"}
-        tag=${2:?"Please specify a tag"}
+        module=$1
+        [[ -n "$module" ]] || error "Please specify a module"
+        tag=$2
+        [[ -n "$tag" ]] || error "Please specify a tag"
         shift 2
-        if [ -z "$1" ]
-        then
-            error "Please specify at least one package to install"
-        fi
+        [[ -n "$1" ]] || error "Please specify at least one package to uninstall"
         check_module "$module"
         call_module "$module" uninstall "$@"
         packagespath=$tagspath/$tag/packages
         packagesfile=$packagespath/$module
-        if [ -f "$packagesfile" ]
+        if [[ -f "$packagesfile" ]]
         then
             packages_str=$(cat "$packagesfile")
             for p in "$@"
@@ -157,7 +150,7 @@ case "$command" in
 
     update)
         module=$1
-        if [ -z "$module" ]
+        if [[ -z "$module" ]]
         then
             for module in $modulespath/*
             do

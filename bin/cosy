@@ -5,7 +5,7 @@ confdir=$HOME/.sysy.d
 tagsfile=$confdir/tags
 tagspath=$(realpath "$scriptpath/../tags")
 
-if which icdiff >/dev/null 2>/dev/null
+if command -v icdiff >/dev/null 2>/dev/null
 then
     nicediff="icdiff"
 else
@@ -21,7 +21,7 @@ find_local_file () {
     while IFS= read -r tag
     do
         local_file=$tagspath/$tag/system$system_file
-        if [ -f "$local_file" ]
+        if [[ -f "$local_file" ]]
         then
             echo "$local_file"
             return
@@ -37,10 +37,7 @@ add_file () {
     sudo -v
     local tag=$1
     local system_file=$2
-    if [ ! -f "$system_file" ]
-    then
-        error "Could not find $system_file"
-    fi
+    [[ -f "$system_file" ]] || error "Could not find $system_file"
     local local_file=$tagspath/$tag/system$system_file
     mkdir -p "$(dirname "$local_file")"
     sudo cat "$system_file" | tee "$local_file"
@@ -50,10 +47,7 @@ sync_file () {
     sudo -v
     local local_file=$1
     local system_file=$2
-    if [ ! -f "$local_file" ]
-    then
-        error "$local_file not handled by cosy"
-    fi
+    [[ -f "$local_file" ]] || error "$local_file not handled by cosy"
     if sudo ls "$system_file" >/dev/null 2>/dev/null
     then
         if ! sudo diff "$system_file" "$local_file" >/dev/null 2>/dev/null
@@ -96,21 +90,15 @@ case "$command" in
     add)
         tag=$1
         system_file=$2
-        if [ ! -f "$system_file" ]
-        then
-            error "Please specify a tag and a system file"
-        fi
+        [[ -f "$system_file" ]] || error "Please specify a tag and a system file"
         add_file "$tag" "$system_file"
         ;;
 
     edit)
         system_file=$1
-        if [ ! -f "$system_file" ]
-        then
-            error "Please specify a system file"
-        fi
+        [[ -f "$system_file" ]] || error "Please specify a system file"
         local_file=$(find_local_file "$system_file")
-        if [ ! -e "$local_file" ]
+        if [[ ! -e "$local_file" ]]
         then
             read -r -p "Tag: " tag < /dev/tty
             add_file "$tag" "$system_file"
@@ -123,7 +111,7 @@ case "$command" in
 
     sync)
         system_file=$1
-        if [ -z "$system_file" ]
+        if [[ -z "$system_file" ]]
         then
             shopt -s globstar nullglob
             while IFS= read -r tag
@@ -131,7 +119,7 @@ case "$command" in
                 filespath=$tagspath/$tag/system
                 for local_file in $filespath/**
                 do
-                    if [ -f "$local_file" ]
+                    if [[ -f "$local_file" ]]
                     then
                         local_file=$(realpath --relative-to "$filespath" "$local_file")
                         system_file=/$local_file
