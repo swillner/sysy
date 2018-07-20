@@ -2,9 +2,11 @@
 set -e
 
 get_packages_to_remove () {
-    packages=$1
-    deborphan --guess-all -k <(echo "$packages")
-    deborphan --guess-all --find-config -k <(echo "$packages")
+    tmp=$(mktemp)
+    echo "$1" > "$tmp"
+    deborphan --guess-all --keep-file="$tmp"
+    deborphan --guess-all --find-config --keep-file="$tmp"
+    rm "$tmp"
 }
 
 command=$1
@@ -35,13 +37,14 @@ case "$command" in
         ;;
 
     sync)
-        missing=$(comm -23 <(echo "$@" | sed 's/ /\n/g' | sort) <(dpkg-query -f '${binary:Package}\n' -W | sed 's/:amd64//g' | sort))
-        [[ -z "$missing" ]] || sudo aptitude -q=3 install "$missing"
-        to_remove=$(get_packages_to_remove "$@")
-        if [[ -n "$to_remove" ]]
+        packages=$(sed 's/ /\n/g' <<< "$@" | sort | uniq)
+        readarray -t missing < <(comm -23 <(echo "$packages") <(dpkg-query -f '${binary:Package}\n' -W | sed 's/:amd64//g' | sort))
+        [[ "${#missing[@]}" == 0 ]] || sudo aptitude -q=3 install "${missing[@]}"
+        readarray -t to_remove < <(get_packages_to_remove "$packages")
+        if [[ "${#to_remove[@]}" -gt 0 ]]
         then
-            to_remove=$(sudo apt-get -qq -s purge "$to_remove" 2>/dev/null | cut -f2 -d ' ')
-            [[ -z "$to_remove" ]] || sudo aptitude -q=3 purge "$to_remove"
+            readarray -t to_remove < <(sudo apt-get -qq -s purge "${to_remove[@]}" 2>/dev/null | cut -f2 -d ' ')
+            [[ "${#to_remove[@]}" == 0 ]] || sudo aptitude -q=3 purge "${to_remove[@]}"
         fi
         ;;
 
