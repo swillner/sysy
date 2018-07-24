@@ -25,13 +25,14 @@ case "$command" in
         ;;
 
     install)
-        "$sysypip" install --progress-bar=pretty --user "$@"
+        "$sysypip" install --user "$@"
         ;;
 
     sync)
+        # strip git repository paths and normalize package names
         packages=$(printf '%s\n' "$@" \
-                       | sed 's/^\(.*\)\.git$/\1/g' \
                        | sed 's/^git+[a-zA-Z0-9.:\/_\-]*\/\([^\/@]*\)\(@[0-9a-fA-F]*\)\?$/\1/g' \
+                       | sed 's/^\(.*\)\.git$/\1/g' \
                        | sed 's/[-_.]/-/g' \
                        | tr '[:upper:]' '[:lower:]' \
                        | sort \
@@ -44,7 +45,7 @@ case "$command" in
                                             | tr '[:upper:]' '[:lower:]' \
                                             | sort) \
                                 )
-        [[ "${#missing[@]}" == 0 ]] || "$sysypip" install --progress-bar=pretty --user "${missing[@]}"
+        [[ "${#missing[@]}" == 0 ]] || "$sysypip" install --user "$@" # use all packages since we stripped all git paths
         ;;
 
     uninstall)
@@ -52,7 +53,7 @@ case "$command" in
         ;;
 
     update)
-        "$sysypip" install --progress-bar=pretty --user --upgrade "$@"
+        "$sysypip" install --user --upgrade "$@"
         ;;
 
     *)
