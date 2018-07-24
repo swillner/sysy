@@ -40,7 +40,7 @@ case "$command" in
         packages=$(printf '%s\n' "$@" | sort | uniq)
         readarray -t missing < <(comm -23 <(echo "$packages") <(dpkg-query -f '${binary:Package}\n' -W | sed 's/:amd64//g' | sort))
         [[ "${#missing[@]}" == 0 ]] || sudo aptitude -q=3 install "${missing[@]}"
-        if command -v deborphan
+        if command -v deborphan >/dev/null 2>/dev/null
         then
             readarray -t to_remove < <(get_packages_to_remove "$packages")
             if [[ "${#to_remove[@]}" -gt 0 ]]
