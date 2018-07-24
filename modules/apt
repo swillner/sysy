@@ -44,7 +44,7 @@ case "$command" in
         if [[ "${#to_remove[@]}" -gt 0 ]]
         then
             readarray -t to_remove < <(sudo apt-get -qq -s purge "${to_remove[@]}" 2>/dev/null | cut -f2 -d ' ')
-            [[ "${#to_remove[@]}" == 0 ]] || sudo aptitude -q=3 purge "${to_remove[@]}"
+            [[ "${#to_remove[@]}" == 0 ]] || sudo aptitude -q=3 purge "${to_remove[@]}" || true
         fi
         ;;
 
