@@ -65,7 +65,7 @@ case "$command" in
             while IFS= read -r server
             do
                 info "Syncing $server..."
-                ssh -o LogLevel=QUIET -t "$server" "sysy update && sysy sync" || {
+                ssh -o LogLevel=QUIET -t "$server" "source \$HOME/.profile && \$HOME/.sysy.d/bin/sysy update && \$HOME/.sysy.d/bin/sysy sync" < /dev/tty || {
                     ret=$?
                     if [[ "$ret" == 255 ]]
                     then
