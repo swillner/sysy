@@ -1,13 +1,13 @@
 #!/usr/bin/env bash
 set -e
-scriptpath=$(dirname "$(realpath "$0")")
 confdir=$HOME/.sysy.d
+sysypath=$(realpath "$confdir/bin/..")
 tagsfile=$confdir/tags
-tagspath=$(realpath "$scriptpath/../tags")
-modulespath=$(realpath "$scriptpath/../modules")
+tagspath=$(realpath "$sysypath/tags")
+modulespath=$(realpath "$sysypath/modules")
 
 # shellcheck source=/home/sven/sync/sysy/scripts/include.sh
-source "$scriptpath/../scripts/include.sh"
+source "$sysypath/scripts/include.sh"
 
 call_module () {
     local module=$1

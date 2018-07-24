@@ -22,7 +22,9 @@ case "$command" in
         ;;
 
     sync)
-        go get "$@"
+        packages=$(printf '%s\n' "$@" | sort | uniq)
+        readarray -t missing < <(comm -23 <(echo "$packages") <(go list '...' | sort))
+        [[ "${#missing[@]}" == 0 ]] || go get "${missing[@]}"
         ;;
 
     uninstall)

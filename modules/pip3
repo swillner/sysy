@@ -1,19 +1,22 @@
 #!/usr/bin/env bash
 set -e
 
+[[ -n "$sysypip" ]] || sysypip=pip3
+[[ -n "$sysypython" ]] || sysypython=pip3
+
 command=$1
 shift || true
 case "$command" in
 
     bootstrap)
-        if ! command -v python3 >/dev/null 2>/dev/null
+        if ! command -v "$sysypython" >/dev/null 2>/dev/null
         then
-            info "Installing python3..."
-            sudo apt-get install python3
+            info "Installing $sysypython..."
+            sudo apt-get install "$sysypython"
         fi
-        if ! command -v pip3 >/dev/null 2>/dev/null
+        if ! command -v "$sysypip" >/dev/null 2>/dev/null
         then
-            curl -s https://bootstrap.pypa.io/get-pip.py | python3 - --user
+            curl -s https://bootstrap.pypa.io/get-pip.py | "$sysypython" - --user
         fi
         ;;
 
@@ -22,19 +25,34 @@ case "$command" in
         ;;
 
     install)
-        pip3 install --progress-bar=pretty --user "$@"
+        "$sysypip" install --progress-bar=pretty --user "$@"
         ;;
 
     sync)
-        pip3 install --progress-bar=pretty --user "$@"
+        packages=$(printf '%s\n' "$@" \
+                       | sed 's/^\(.*\)\.git$/\1/g' \
+                       | sed 's/^git+[a-zA-Z0-9.:\/_\-]*\/\([^\/@]*\)\(@[0-9a-fA-F]*\)\?$/\1/g' \
+                       | sed 's/[-_.]/-/g' \
+                       | tr '[:upper:]' '[:lower:]' \
+                       | sort \
+                       | uniq)
+        readarray -t missing < <(comm -23 \
+                                      <(echo "$packages") \
+                                      <("$sysypip" list \
+                                            | cut -d' ' -f1 \
+                                            | sed 's/[-_.]/-/g' \
+                                            | tr '[:upper:]' '[:lower:]' \
+                                            | sort) \
+                                )
+        [[ "${#missing[@]}" == 0 ]] || "$sysypip" install --progress-bar=pretty --user "${missing[@]}"
         ;;
 
     uninstall)
-        pip3 uninstall "$@"
+        "$sysypip" uninstall "$@"
         ;;
 
     update)
-        pip3 install --progress-bar=pretty --user --upgrade "$@"
+        "$sysypip" install --progress-bar=pretty --user --upgrade "$@"
         ;;
 
     *)

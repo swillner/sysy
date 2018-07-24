@@ -1,45 +1,10 @@
 #!/usr/bin/env bash
 set -e
+sysypip=pip2
+sysypython=python2
 
-command=$1
-shift || true
-case "$command" in
+sysypath=$(realpath "$confdir/bin/..")
+tagsfile=$confdir/tags
 
-    bootstrap)
-        if ! command -v python2 >/dev/null 2>/dev/null
-        then
-            info "Installing python2..."
-            sudo apt-get install python2
-        fi
-        if ! command -v pip2 >/dev/null 2>/dev/null
-        then
-            curl -s https://bootstrap.pypa.io/get-pip.py | python2 - --user
-        fi
-        ;;
-
-    desc)
-        echo
-        ;;
-
-    install)
-        pip2 install --progress-bar=pretty --user "$@"
-        ;;
-
-    sync)
-        pip2 install --progress-bar=pretty --user "$@"
-        ;;
-
-    uninstall)
-        pip2 uninstall "$@"
-        ;;
-
-    update)
-        pip2 install --progress-bar=pretty --user --upgrade "$@"
-        ;;
-
-    *)
-        echo "Module does not support this command" 1>&2
-        exit 2
-        ;;
-
-esac
+# shellcheck source=/home/sven/sync/sysy/modules/pip3
+source "$sysypath/modules/pip3" "$@"

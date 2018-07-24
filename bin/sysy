@@ -13,14 +13,13 @@ then
     sudo apt-get install diffutils
 fi
 
-scriptpath=$(dirname "$(realpath "$0")")
 confdir=$HOME/.sysy.d
-sysydir=$(dirname "$scriptpath")
+sysypath=$(realpath "$confdir/bin/..")
 tagsfile=$confdir/tags
-tagspath=$(realpath "$scriptpath/../tags")
+tagspath=$(realpath "$sysypath/tags")
 
 # shellcheck source=/home/sven/sync/sysy/scripts/include.sh
-source "$scriptpath/../scripts/include.sh"
+source "$sysypath/scripts/include.sh"
 
 command=$1
 shift || true
@@ -28,7 +27,7 @@ case "$command" in
 
     bootstrap)
         mkdir -p "$confdir"
-        ensure_link "$sysydir/bin" "$confdir/bin"
+        ensure_link "$sysypath/bin" "$confdir/bin"
         touch "$confdir/tags"
         if ask_user "Edit tags now?" "y" && open_in_editor "$confdir/tags"
         then
@@ -36,36 +35,71 @@ case "$command" in
             while IFS= read -r tag
             do
                 script=$tagspath/$tag/pre-bootstrap.sh
-                [ -f "$script" ] && SYSYDIR=$sysydir bash "$script"
+                [ -f "$script" ] && SYSYPATH=$sysypath bash "$script"
             done < "$tagsfile"
 
             info "Syncing system configuration..."
-            bash "$sysydir/bin/cosy" sync
+            bash "$sysypath/bin/cosy" sync
             info "Bootstrapping packages..."
-            bash "$sysydir/bin/pasy" bootstrap
+            bash "$sysypath/bin/pasy" bootstrap
             info "Syncing packages..."
-            bash "$sysydir/bin/pasy" sync
+            bash "$sysypath/bin/pasy" sync
             info "Syncing dotfiles..."
-            bash "$sysydir/bin/dosy" sync
+            bash "$sysypath/bin/dosy" sync
 
             info "Invoking post-bootstrap scripts..."
             while IFS= read -r tag
             do
                 script=$tagspath/$tag/post-bootstrap.sh
-                [ -f "$script" ] && SYSYDIR=$sysydir bash "$script"
+                [ -f "$script" ] && SYSYPATH=$sysypath bash "$script"
             done < "$tagsfile"
         else
             info "Please run $0 sync again after editing"
         fi
         ;;
 
+    serversync)
+        serversfile=$confdir/servers
+        if [[ -f "$serversfile" ]]
+        then
+            while IFS= read -r server
+            do
+                info "Syncing $server..."
+                ssh -o LogLevel=QUIET -t "$server" "sysy update && sysy sync" || {
+                    ret=$?
+                    if [[ "$ret" == 255 ]]
+                    then
+                        exit 255
+                    fi
+                }
+            done < "$serversfile"
+        fi
+        ;;
+
     sync)
         info "Syncing system configuration..."
-        bash "$sysydir/bin/cosy" sync
+        bash "$sysypath/bin/cosy" sync
         info "Syncing packages..."
-        bash "$sysydir/bin/pasy" sync
+        bash "$sysypath/bin/pasy" sync
         info "Syncing dotfiles..."
-        bash "$sysydir/bin/dosy" sync
+        bash "$sysypath/bin/dosy" sync
+        ;;
+
+    update)
+        reposfile=$confdir/repos
+        if [[ -f "$reposfile" ]]
+        then
+            while IFS= read -r repo
+            do
+                d=$(realpath "$sysypath/$repo")
+                info "Updating $d..."
+                if ! (git -C "$d" pull >/dev/null && \
+                        git -C "$d" submodule update --init --recursive >/dev/null)
+                then
+                    echo -e "${COLOR_RED}Update of $d failed${COLOR_CLEAR}" 1>&2
+                fi
+            done < "$reposfile"
+        fi
         ;;
 
     *)
@@ -74,12 +108,14 @@ sysy - system synchronization
 
 Usage:
 
-    $0 COMMAND [ARGUMENTS]
+    $0 COMMAND
 
 Commands:
 
     bootstrap                   bootstrap
+    serversync                  synchronize servers
     sync                        synchronize
+    update                      update git repositories
 
 EOF
         exit 1

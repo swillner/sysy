@@ -35,7 +35,6 @@ case "$command" in
         ;;
 
     sync)
-        cabal update
         already_installed=$(cabal list --installed)
         for p in "$@"
         do

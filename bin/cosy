@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 set -e
-scriptpath=$(dirname "$(realpath "$0")")
 confdir=$HOME/.sysy.d
+sysypath=$(realpath "$confdir/bin/..")
 tagsfile=$confdir/tags
-tagspath=$(realpath "$scriptpath/../tags")
+tagspath=$(realpath "$sysypath/tags")
 
 if command -v icdiff >/dev/null 2>/dev/null
 then
@@ -13,7 +13,7 @@ else
 fi
 
 # shellcheck source=/home/sven/sync/sysy/scripts/include.sh
-source "$scriptpath/../scripts/include.sh"
+source "$sysypath/scripts/include.sh"
 
 find_local_file () {
     local system_file=$1

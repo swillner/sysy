@@ -22,13 +22,9 @@ case "$command" in
         ;;
 
     sync)
-        for p in "$@"
-        do
-            if ! npm list -g "$p" >/dev/null 2>/dev/null
-            then
-                npm install -g "$p"
-            fi
-        done
+        packages=$(printf '%s\n' "$@" | sort | uniq)
+        readarray -t missing < <(comm -23 <(echo "$packages") <(ls "$(npm root -g)" | sort))
+        [[ "${#missing[@]}" == 0 ]] || npm install -g "${missing[@]}"
         ;;
 
     uninstall)

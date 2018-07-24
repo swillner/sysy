@@ -37,7 +37,7 @@ case "$command" in
         ;;
 
     sync)
-        packages=$(sed 's/ /\n/g' <<< "$@" | sort | uniq)
+        packages=$(printf '%s\n' "$@" | sort | uniq)
         readarray -t missing < <(comm -23 <(echo "$packages") <(dpkg-query -f '${binary:Package}\n' -W | sed 's/:amd64//g' | sort))
         [[ "${#missing[@]}" == 0 ]] || sudo aptitude -q=3 install "${missing[@]}"
         readarray -t to_remove < <(get_packages_to_remove "$packages")
