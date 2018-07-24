@@ -40,11 +40,14 @@ case "$command" in
         packages=$(printf '%s\n' "$@" | sort | uniq)
         readarray -t missing < <(comm -23 <(echo "$packages") <(dpkg-query -f '${binary:Package}\n' -W | sed 's/:amd64//g' | sort))
         [[ "${#missing[@]}" == 0 ]] || sudo aptitude -q=3 install "${missing[@]}"
-        readarray -t to_remove < <(get_packages_to_remove "$packages")
-        if [[ "${#to_remove[@]}" -gt 0 ]]
+        if command -v deborphan
         then
-            readarray -t to_remove < <(sudo apt-get -qq -s purge "${to_remove[@]}" 2>/dev/null | cut -f2 -d ' ')
-            [[ "${#to_remove[@]}" == 0 ]] || sudo aptitude -q=3 purge "${to_remove[@]}" || true
+            readarray -t to_remove < <(get_packages_to_remove "$packages")
+            if [[ "${#to_remove[@]}" -gt 0 ]]
+            then
+                readarray -t to_remove < <(sudo apt-get -qq -s purge "${to_remove[@]}" 2>/dev/null | cut -f2 -d ' ')
+                [[ "${#to_remove[@]}" == 0 ]] || sudo aptitude -q=3 purge "${to_remove[@]}" || true
+            fi
         fi
         ;;
 
