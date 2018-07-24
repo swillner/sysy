@@ -19,6 +19,11 @@ case "$command" in
             info "Installing aptitude..."
             sudo apt-get install aptitude
         fi
+        if ! command -v dpkg >/dev/null 2>/dev/null
+        then
+            info "Installing dpkg..."
+            sudo apt-get install dpkg
+        fi
         ;;
 
     desc)
@@ -38,7 +43,7 @@ case "$command" in
 
     sync)
         packages=$(printf '%s\n' "$@" | sort | uniq)
-        readarray -t missing < <(comm -23 <(echo "$packages") <(dpkg-query -f '${binary:Package}\n' -W | sed 's/:amd64//g' | sort))
+        readarray -t missing < <(comm -23 <(echo "$packages") <(dpkg --get-selections | grep -v deinstall | sed 's/:amd64//g' | awk '{print $1}' | sort))
         [[ "${#missing[@]}" == 0 ]] || sudo aptitude -q=3 install "${missing[@]}"
         if command -v deborphan >/dev/null 2>/dev/null
         then
