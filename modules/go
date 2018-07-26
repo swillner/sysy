@@ -28,7 +28,10 @@ case "$command" in
         ;;
 
     uninstall)
-        go clean -i "$@"
+        for package in "$@"
+        do
+            go clean -i "${package}..."
+        done
         ;;
 
     update)
