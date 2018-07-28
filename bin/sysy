@@ -58,6 +58,12 @@ case "$command" in
         fi
         ;;
 
+    full)
+        sysy update
+        sysy sync
+        sysy serversync
+        ;;
+
     serversync)
         serversfile=$confdir/servers
         if [[ -f "$serversfile" ]]
@@ -113,6 +119,7 @@ Usage:
 Commands:
 
     bootstrap                   bootstrap
+    full                        update and do all synchronizations
     serversync                  synchronize servers
     sync                        synchronize
     update                      update git repositories
