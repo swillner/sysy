@@ -37,7 +37,7 @@ add_file () {
     sudo -v
     local tag=$1
     local system_file=$2
-    [[ -f "$system_file" ]] || error "Could not find $system_file"
+    [[ -f "$system_file" ]] || error_and_exit "Could not find $system_file"
     local local_file=$tagspath/$tag/system$system_file
     mkdir -p "$(dirname "$local_file")"
     sudo cat "$system_file" | tee "$local_file"
@@ -47,7 +47,7 @@ sync_file () {
     sudo -v
     local local_file=$1
     local system_file=$2
-    [[ -f "$local_file" ]] || error "$local_file not handled by cosy"
+    [[ -f "$local_file" ]] || error_and_exit "$local_file not handled by cosy"
     if sudo ls "$system_file" >/dev/null 2>/dev/null
     then
         if ! sudo diff "$system_file" "$local_file" >/dev/null 2>/dev/null
@@ -90,13 +90,13 @@ case "$command" in
     add)
         tag=$1
         system_file=$2
-        [[ -f "$system_file" ]] || error "Please specify a tag and a system file"
+        [[ -f "$system_file" ]] || error_and_exit "Please specify a tag and a system file"
         add_file "$tag" "$system_file"
         ;;
 
     edit)
         system_file=$1
-        [[ -f "$system_file" ]] || error "Please specify a system file"
+        [[ -f "$system_file" ]] || error_and_exit "Please specify a system file"
         local_file=$(find_local_file "$system_file")
         if [[ ! -e "$local_file" ]]
         then

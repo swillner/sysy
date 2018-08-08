@@ -102,7 +102,7 @@ case "$command" in
                 if ! (git -C "$d" pull >/dev/null && \
                         git -C "$d" submodule update --init --recursive >/dev/null)
                 then
-                    echo -e "${COLOR_RED}Update of $d failed${COLOR_CLEAR}" 1>&2
+                    error "${COLOR_RED}Update of $d failed${COLOR_CLEAR}"
                 fi
             done < "$reposfile"
         fi

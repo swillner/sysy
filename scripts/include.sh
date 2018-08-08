@@ -25,6 +25,10 @@ info () {
 
 error () {
     echo -e "$COLOR_RED$1$COLOR_CLEAR" 1>&2
+}
+
+error_and_exit () {
+    error "$1"
     exit "${2:-1}"
 }
 
@@ -100,13 +104,13 @@ ask_to_install_if_not_found () {
     then
         return 1
     else
-        echo "Could not find $command executable" 1>&2
+        error "Could not find $command executable"
         if ask_user "Install $command now?" "y"
         then
             info "Installing $command..."
             return 0
         else
-            error "Aborting" 2
+            error_and_exit "Aborting" 2
         fi
     fi
 }

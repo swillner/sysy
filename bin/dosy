@@ -39,10 +39,10 @@ find_local_file_tag () {
 sync_file () {
     local local_file=$1
     local file=$2
-    [[ -e "$local_file" ]] || error "$local_file not found"
+    [[ -e "$local_file" ]] || error_and_exit "$local_file not found"
     if [[ -d "$local_file" && -e "$local_file/.sub" ]]
     then
-        [[ ! -L "$file" ]] || error "$file is a link"
+        [[ ! -L "$file" ]] || error_and_exit "$file is a link"
         mkdir -p "$file"
         for f in $local_file/*
         do
@@ -64,17 +64,17 @@ case "$command" in
     add)
         tag=$1
         file=$2
-        [[ -e "$file" ]] || error "Please specify a tag and a file or directory"
-        [[ ! -L "$file" ]] || error "$file is a symlink"
+        [[ -e "$file" ]] || error_and_exit "Please specify a tag and a file or directory"
+        [[ ! -L "$file" ]] || error_and_exit "$file is a symlink"
         custom_file=$3
         if [[ -z "$custom_file" ]]
         then
             file=$(realpath --relative-to "$HOME" "$file")
-            [[ "$(dirname "$file")" == "." && "${file:0:1}" == "." && "$file" != "." ]] || error "$file is not a dotfile"
+            [[ "$(dirname "$file")" == "." && "${file:0:1}" == "." && "$file" != "." ]] || error_and_exit "$file is not a dotfile"
             undotted_file=${file:1}
             dotfilespath=$tagspath/$tag/dotfiles
             local_file=$dotfilespath/$undotted_file
-            [[ ! -f "$local_file" ]] || error "$file is already handled by dosy with tag $tag"
+            [[ ! -f "$local_file" ]] || error_and_exit "$file is already handled by dosy with tag $tag"
             mkdir -p "$dotfilespath"
             mv "$HOME/$file" "$local_file"
             ln -s "$(realpath "$local_file")" "$HOME/$file"
@@ -105,7 +105,7 @@ case "$command" in
                 while IFS= read -r line
                 do
                     readarray -d ';' -t args <<< "$line;"
-                    [[ "${#args[@]}" -eq 3 ]] || error "Corrupt line in $custompath"
+                    [[ "${#args[@]}" -eq 3 ]] || error_and_exit "Corrupt line in $custompath"
                     custom_file=${args[0]}
                     file=${args[1]}
                     [[ "${file:0:1}" == "/" ]] || file=$HOME/$file
@@ -117,12 +117,12 @@ case "$command" in
 
     unhandle)
         file=$1
-        [[ -e "$file" ]] || error "Please specify a file or directory"
+        [[ -e "$file" ]] || error_and_exit "Please specify a file or directory"
         local_file=$(realpath --no-symlinks --relative-to "$HOME" "$file")
-        [[ "$(dirname "$local_file")" == "." && "${local_file:0:1}" == "." && "$local_file" != "." ]] ||  error "$local_file is not a dotfile or not handled by dosy"
+        [[ "$(dirname "$local_file")" == "." && "${local_file:0:1}" == "." && "$local_file" != "." ]] ||  error_and_exit "$local_file is not a dotfile or not handled by dosy"
         undotted_file=${local_file:1}
         tag=$(find_local_file_tag "$undotted_file")
-        [[ -n "$tag" ]] ||  error "$local_file not handled by dosy as a dotfile"
+        [[ -n "$tag" ]] ||  error_and_exit "$local_file not handled by dosy as a dotfile"
         local_file=$tagspath/$tag/dotfiles/$undotted_file
         if [[ "$(realpath "$file")" != "$local_file" ]]
         then
