@@ -36,7 +36,8 @@ case "$command" in
 
     sync)
         packages=$(printf '%s\n' "$@" | sort | uniq)
-        readarray -t missing < <(comm -23 <(echo "$packages") <(go list '...' | sort))
+        already_installed=$(go list '...' | sort)
+        readarray -t missing < <(comm -23 <(echo "$packages") <(echo "$already_installed"))
         [[ "${#missing[@]}" == 0 ]] || go get "${missing[@]}"
         ;;
 

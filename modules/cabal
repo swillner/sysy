@@ -13,34 +13,18 @@ case "$command" in
         echo "${desc:19:120}"
         ;;
 
-    install)
-        cabal update
-        already_installed=$(cabal list --installed)
-        for p in "$@"
-        do
-            if ! echo "$already_installed" | grep "^* $p$" >/dev/null
-            then
-                if ! TMPDIR=$XDG_RUNTIME_DIR cabal install "$p"
-                then
-                    break
-                fi
-            fi
-        done
-        ;;
-
-    sync)
-        cabal update
-        already_installed=$(cabal list --installed)
-        for p in "$@"
-        do
-            if ! echo "$already_installed" | grep "^* $p$" >/dev/null
-            then
-                if ! TMPDIR=$XDG_RUNTIME_DIR cabal install "$p"
-                then
-                    break
-                fi
-            fi
-        done
+    install|sync)
+        packages=$(printf '%s\n' "$@" | sort | uniq)
+        already_installed=$(cabal list --installed 2>/dev/null \
+                                | sed -n 's/^\* \(.*\)$/\1/p' \
+                                | sort)
+        readarray -t missing < <(comm -23 <(echo "$packages") <(echo "$already_installed"))
+        if [[ "${#missing[@]}" -gt 0 ]]
+        then
+            cabal update
+            export TMPDIR=$XDG_RUNTIME_DIR
+            cabal install "${missing[@]}"
+        fi
         ;;
 
     *)

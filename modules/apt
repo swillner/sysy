@@ -33,7 +33,8 @@ case "$command" in
 
     sync)
         packages=$(printf '%s\n' "$@" | sort | uniq)
-        readarray -t missing < <(comm -23 <(echo "$packages") <(dpkg --get-selections | grep -v deinstall | sed 's/:amd64//g' | awk '{print $1}' | sort))
+        already_installed=$(dpkg --get-selections | grep -v deinstall | sed 's/:amd64//g' | awk '{print $1}' | sort)
+        readarray -t missing < <(comm -23 <(echo "$packages") <(echo "$already_installed"))
         [[ "${#missing[@]}" == 0 ]] || sudo aptitude -q=3 install "${missing[@]}"
         if command -v deborphan >/dev/null 2>/dev/null
         then

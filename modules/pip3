@@ -28,14 +28,12 @@ case "$command" in
                        | tr '[:upper:]' '[:lower:]' \
                        | sort \
                        | uniq)
-        readarray -t missing < <(comm -23 \
-                                      <(echo "$packages") \
-                                      <("$sysypip" list \
-                                            | cut -d' ' -f1 \
-                                            | sed 's/[-_.]/-/g' \
-                                            | tr '[:upper:]' '[:lower:]' \
-                                            | sort) \
-                                )
+        already_installed=$("$sysypip" list \
+                                | cut -d' ' -f1 \
+                                | sed 's/[-_.]/-/g' \
+                                | tr '[:upper:]' '[:lower:]' \
+                                | sort)
+        readarray -t missing < <(comm -23 <(echo "$packages") <(echo "$already_installed"))
         [[ "${#missing[@]}" == 0 ]] || "$sysypip" install --user "$@" # use all packages since we stripped all git paths
         ;;
 

@@ -17,7 +17,8 @@ case "$command" in
 
     sync)
         packages=$(printf '%s\n' "$@" | sort | uniq)
-        readarray -t missing < <(comm -23 <(echo "$packages") <(ls "$(npm root -g)" | sort))
+        already_installed=$(find "$(npm root -g)" -maxdepth 1 -mindepth 1 -type d -printf '%P\n' | sort)
+        readarray -t missing < <(comm -23 <(echo "$packages") <(echo "$already_installed"))
         [[ "${#missing[@]}" == 0 ]] || npm install -g "${missing[@]}"
         ;;
 
