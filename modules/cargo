@@ -8,12 +8,7 @@ case "$command" in
     bootstrap)
         if ! command -v cargo >/dev/null 2>/dev/null
         then
-            if ask_user "Install cargo via apt-get?" "n"
-            then
-                sudo apt-get install cargo
-            else
-                curl https://sh.rustup.rs -sSf | sh
-            fi
+            curl https://sh.rustup.rs -sSf | sh
         fi
         ;;
 
