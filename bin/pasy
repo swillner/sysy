@@ -6,7 +6,7 @@ tagsfile=$confdir/tags
 tagspath=$(realpath "$sysypath/tags")
 modulespath=$(realpath "$sysypath/modules")
 
-# shellcheck source=/home/sven/sync/sysy/scripts/include.sh
+# shellcheck source=/dev/null
 source "$sysypath/scripts/include.sh"
 
 call_module () {
@@ -14,6 +14,7 @@ call_module () {
     local command=$2
     shift 2
     local modulefile=$modulespath/$module
+    # shellcheck source=/dev/null
     source "$modulefile" "$command" "$@"
 }
 

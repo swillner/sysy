@@ -12,7 +12,7 @@ else
     nicediff="diff -y"
 fi
 
-# shellcheck source=/home/sven/sync/sysy/scripts/include.sh
+# shellcheck source=/dev/null
 source "$sysypath/scripts/include.sh"
 
 find_local_file () {
