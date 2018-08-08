@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 set -e
 
+export GOMAXPROCS=1
+
 if ask_to_install_if_not_found go
 then
     export GVM_NO_UPDATE_PROFILE=1
@@ -12,13 +14,12 @@ then
     then
         gvm install go1.9 --binary
         gvm use go1.9
-        export GOMAXPROCS=1
         export GOROOT_BOOTSTRAP=$GOROOT
         gvm install go1.10 --with-build-tools
     else
         gvm install go1.10 --binary --with-build-tools
     fi
-    gvm use go1.10
+    gvm use go1.10 --default
 fi
 
 command=$1
