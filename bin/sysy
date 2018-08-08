@@ -99,8 +99,8 @@ case "$command" in
             do
                 d=$(realpath "$sysypath/$repo")
                 info "Updating $d..."
-                if ! (git -C "$d" pull >/dev/null && \
-                        git -C "$d" submodule update --init --recursive >/dev/null)
+                if ! git -C "$d" pull -q \
+                     || ! git -C "$d" submodule update --init --recursive -q
                 then
                     error "${COLOR_RED}Update of $d failed${COLOR_CLEAR}"
                 fi
