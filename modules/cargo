@@ -1,16 +1,11 @@
 #!/usr/bin/env bash
 set -e
 
-command=$1
-shift || true
-case "$command" in
+ask_to_install_if_not_found cargo && (curl https://sh.rustup.rs -sSf | sh)
 
-    bootstrap)
-        if ! command -v cargo >/dev/null 2>/dev/null
-        then
-            curl https://sh.rustup.rs -sSf | sh
-        fi
-        ;;
+command=$1
+shift || return 0
+case "$command" in
 
     desc)
         echo
@@ -52,8 +47,7 @@ case "$command" in
         ;;
 
     *)
-        echo "Module does not support this command" 1>&2
-        exit 2
+        error "Module does not support this command"
         ;;
 
 esac

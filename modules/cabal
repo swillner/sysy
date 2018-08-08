@@ -1,17 +1,11 @@
 #!/usr/bin/env bash
 set -e
 
-command=$1
-shift || true
-case "$command" in
+ask_to_install_if_not_found cabal && sudo apt-get install cabal-install
 
-    bootstrap)
-        if ! command -v cabal >/dev/null 2>/dev/null
-        then
-            info "Installing cabal..."
-            sudo apt-get install cabal-install
-        fi
-        ;;
+command=$1
+shift || return 0
+case "$command" in
 
     desc)
         package=$1
@@ -49,8 +43,7 @@ case "$command" in
         ;;
 
     *)
-        echo "Module does not support this command" 1>&2
-        exit 2
+        error "Module does not support this command"
         ;;
 
 esac

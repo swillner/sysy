@@ -4,21 +4,12 @@ set -e
 [[ -n "$sysypip" ]] || sysypip=pip3
 [[ -n "$sysypython" ]] || sysypython=pip3
 
-command=$1
-shift || true
-case "$command" in
+ask_to_install_if_not_found "$sysypython" && sudo apt-get install "$sysypython"
+ask_to_install_if_not_found "$sysypip" && (curl -s https://bootstrap.pypa.io/get-pip.py | "$sysypython" - --user)
 
-    bootstrap)
-        if ! command -v "$sysypython" >/dev/null 2>/dev/null
-        then
-            info "Installing $sysypython..."
-            sudo apt-get install "$sysypython"
-        fi
-        if ! command -v "$sysypip" >/dev/null 2>/dev/null
-        then
-            curl -s https://bootstrap.pypa.io/get-pip.py | "$sysypython" - --user
-        fi
-        ;;
+command=$1
+shift || return 0
+case "$command" in
 
     desc)
         echo
@@ -57,8 +48,7 @@ case "$command" in
         ;;
 
     *)
-        echo "Module does not support this command" 1>&2
-        exit 2
+        error "Module does not support this command"
         ;;
 
 esac

@@ -1,32 +1,29 @@
 #!/usr/bin/env bash
 set -e
 
-command=$1
-shift || true
-case "$command" in
+if ask_to_install_if_not_found go
+then
+    export GVM_NO_UPDATE_PROFILE=1
+    GVMPARENTPATH="$HOME/.local"
+    bash <(curl -s -S -L https://raw.githubusercontent.com/moovweb/gvm/master/binscripts/gvm-installer) master "$GVMPARENTPATH"
+    # shellcheck source=/dev/null
+    source "$GVMPARENTPATH/gvm/scripts/gvm"
+    if ask_user "Compile go1.10 from source?" "y"
+    then
+        gvm install go1.9 --binary
+        gvm use go1.9
+        export GOMAXPROCS=1
+        export GOROOT_BOOTSTRAP=$GOROOT
+        gvm install go1.10 --with-build-tools
+    else
+        gvm install go1.10 --binary --with-build-tools
+    fi
+    gvm use go1.10
+fi
 
-    bootstrap)
-        if ! command -v go >/dev/null 2>/dev/null
-        then
-            info "Installing gvm..."
-            export GVM_NO_UPDATE_PROFILE=1
-            GVMPARENTPATH="$HOME/.local"
-            bash <(curl -s -S -L https://raw.githubusercontent.com/moovweb/gvm/master/binscripts/gvm-installer) master "$GVMPARENTPATH"
-            # shellcheck source=/dev/null
-            source "$GVMPARENTPATH/gvm/scripts/gvm"
-            if ask_user "Compile go1.10 from source?" "y"
-            then
-                gvm install go1.9 --binary
-                gvm use go1.9
-                export GOMAXPROCS=1
-                export GOROOT_BOOTSTRAP=$GOROOT
-                gvm install go1.10 --with-build-tools
-            else
-                gvm install go1.10 --binary --with-build-tools
-            fi
-            gvm use go1.10
-        fi
-        ;;
+command=$1
+shift || return 0
+case "$command" in
 
     desc)
         echo
@@ -54,8 +51,7 @@ case "$command" in
         ;;
 
     *)
-        echo "Module does not support this command" 1>&2
-        exit 2
+        error "Module does not support this command"
         ;;
 
 esac

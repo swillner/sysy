@@ -9,22 +9,12 @@ get_packages_to_remove () {
     rm "$tmp"
 }
 
-command=$1
-shift || true
-case "$command" in
+ask_to_install_if_not_found aptitude && sudo apt-get install aptitude
+ask_to_install_if_not_found dpkg && sudo apt-get install dpkg
 
-    bootstrap)
-        if ! command -v aptitude >/dev/null 2>/dev/null
-        then
-            info "Installing aptitude..."
-            sudo apt-get install aptitude
-        fi
-        if ! command -v dpkg >/dev/null 2>/dev/null
-        then
-            info "Installing dpkg..."
-            sudo apt-get install dpkg
-        fi
-        ;;
+command=$1
+shift || return 0
+case "$command" in
 
     desc)
         package=$1
@@ -65,8 +55,7 @@ case "$command" in
         ;;
 
     *)
-        echo "Module does not support this command" 1>&2
-        exit 2
+        error "Module does not support this command"
         ;;
 
 esac

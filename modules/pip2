@@ -6,5 +6,5 @@ sysypython=python2
 sysypath=$(realpath "$confdir/bin/..")
 tagsfile=$confdir/tags
 
-# shellcheck source=/home/sven/sync/sysy/modules/pip3
+# shellcheck source=/dev/null
 source "$sysypath/modules/pip3" "$@"

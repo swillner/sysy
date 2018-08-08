@@ -11,11 +11,10 @@ source "$sysypath/scripts/include.sh"
 
 call_module () {
     local module=$1
-    local command=$2
-    shift 2
+    shift 1
     local modulefile=$modulespath/$module
     # shellcheck source=/dev/null
-    source "$modulefile" "$command" "$@"
+    source "$modulefile" "$@"
 }
 
 check_module () {
@@ -48,7 +47,12 @@ call_module_for_all_packages () {
         then
             info "$desc $module ($packages_count selected)..."
         fi
-        call_module "$module" "$command" "${packages[@]}"
+        if [[ -n "$command" ]]
+        then
+            call_module "$module" "$command" "${packages[@]}"
+        else
+            call_module "$module"
+        fi
     fi
 }
 
@@ -63,11 +67,11 @@ case "$command" in
             for module in $modulespath/*
             do
                 module=$(basename "$module")
-                call_module_for_all_packages "$module" bootstrap Bootstrapping
+                call_module_for_all_packages "$module" "" "Bootstrapping"
             done
         else
             check_module "$module"
-            call_module_for_all_packages "$module" bootstrap Bootstrapping
+            call_module_for_all_packages "$module" "" "Bootstrapping"
         fi
         ;;
 
@@ -119,11 +123,11 @@ case "$command" in
             for module in $modulespath/*
             do
                 module=$(basename "$module")
-                call_module_for_all_packages "$module" sync Syncing
+                call_module_for_all_packages "$module" sync "Syncing"
             done
         else
             check_module "$module"
-            call_module_for_all_packages "$module" sync Syncing
+            call_module_for_all_packages "$module" sync "Syncing"
         fi
         ;;
 
@@ -156,11 +160,11 @@ case "$command" in
             for module in $modulespath/*
             do
                 module=$(basename "$module")
-                call_module_for_all_packages "$module" update Updating
+                call_module_for_all_packages "$module" update "Updating"
             done
         else
             check_module "$module"
-            call_module_for_all_packages "$module" update Updating
+            call_module_for_all_packages "$module" update "Updating"
         fi
         ;;
 

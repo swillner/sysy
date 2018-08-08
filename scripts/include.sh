@@ -94,18 +94,19 @@ ensure_link () {
     fi
 }
 
-ensure_command () {
+ask_to_install_if_not_found () {
     local command=$1
-    local package=${2:-$command}
-    if ! command -v "$command" >/dev/null 2>/dev/null
+    if command -v "$command" >/dev/null 2>/dev/null
     then
+        return 1
+    else
         echo "Could not find $command executable" 1>&2
-        if ask_user "Install $package package now?" "y"
+        if ask_user "Install $command now?" "y"
         then
-            sudo apt-get install "$package"
+            info "Installing $command..."
+            return 0
         else
-            echo "Aborting" 1>&2
-            exit 2
+            error "Aborting" 2
         fi
     fi
 }
