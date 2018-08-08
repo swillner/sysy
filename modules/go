@@ -8,8 +8,23 @@ case "$command" in
     bootstrap)
         if ! command -v go >/dev/null 2>/dev/null
         then
-            info "Installing go..."
-            sudo apt-get install golang-go
+            info "Installing gvm..."
+            export GVM_NO_UPDATE_PROFILE=1
+            GVMPARENTPATH="$HOME/.local"
+            bash <(curl -s -S -L https://raw.githubusercontent.com/moovweb/gvm/master/binscripts/gvm-installer) master "$GVMPARENTPATH"
+            # shellcheck source=/dev/null
+            source "$GVMPARENTPATH/gvm/scripts/gvm"
+            if ask_user "Compile go1.10 from source?" "y"
+            then
+                gvm install go1.9 --binary
+                gvm use go1.9
+                export GOMAXPROCS=1
+                export GOROOT_BOOTSTRAP=$GOROOT
+                gvm install go1.10 --with-build-tools
+            else
+                gvm install go1.10 --binary --with-build-tools
+            fi
+            gvm use go1.10
         fi
         ;;
 
