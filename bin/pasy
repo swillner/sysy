@@ -30,7 +30,7 @@ get_packages () {
         packagesfile=$tagspath/$tag/packages/$module
         if [[ -f "$packagesfile" ]]
         then
-            grep -v -e "^#" < "$packagesfile" | cut -f1 -d' ' # | tr '\n' ' '
+            grep -v -e "^#" < "$packagesfile" | cut -f1 -d' ' | grep -v "^$"
         fi
     done < "$tagsfile"
 }
@@ -110,7 +110,7 @@ case "$command" in
             for p in "$@"
             do
                 desc=$(call_module "$module" desc "$p")
-                packages_str=$(echo -e "$packages_str\\n$p # $desc" | sort | uniq)
+                packages_str=$(echo -e "$packages_str\\n$p # $desc" | grep -v "^$" | sort | uniq)
             done
             echo "$packages_str" > "$packagesfile"
         fi
