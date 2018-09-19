@@ -23,7 +23,7 @@ case "$command" in
         then
             cabal update
             export TMPDIR=$XDG_RUNTIME_DIR
-            cabal install "${missing[@]}"
+            cabal install "${missing[@]}" --avoid-reinstalls
         fi
         ;;
 
