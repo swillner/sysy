@@ -25,6 +25,16 @@ case "$command" in
         cargo uninstall "$@"
         ;;
 
+    update)
+        export TMPDIR=$XDG_RUNTIME_DIR
+        if command -v rustup
+        then
+            rustup update
+        fi
+        # requires cargo-update crate
+        cargo install-update -a
+        ;;
+
     *)
         error_and_exit "Module does not support this command"
         ;;
