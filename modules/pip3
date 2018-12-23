@@ -2,7 +2,7 @@
 set -e
 
 [[ -n "$sysypip" ]] || sysypip=pip3
-[[ -n "$sysypython" ]] || sysypython=pip3
+[[ -n "$sysypython" ]] || sysypython=python3
 
 ask_to_install_if_not_found "$sysypython" && sudo apt-get install "$sysypython"
 ask_to_install_if_not_found "$sysypip" && (curl -s https://bootstrap.pypa.io/get-pip.py | "$sysypython" - --user)
@@ -16,25 +16,41 @@ case "$command" in
         ;;
 
     install)
+        export TMPDIR=$XDG_RUNTIME_DIR
         "$sysypip" install --user "$@"
         ;;
 
     sync)
-        # strip git repository paths and normalize package names
-        packages=$(printf '%s\n' "$@" \
-                       | sed 's/^git+[a-zA-Z0-9.:\/_\-]*\/\([^\/@]*\)\(@[0-9a-fA-F]*\)\?$/\1/g' \
-                       | sed 's/^\(.*\)\.git$/\1/g' \
-                       | sed 's/[-_.]/-/g' \
-                       | tr '[:upper:]' '[:lower:]' \
-                       | sort \
-                       | uniq)
+        declare -A packages
+        for package in "$@"
+        do
+            key=$(sed 's/^git+[a-zA-Z0-9.:\/_\-]*\/\([^\/@]*\)\(@.*\)\?$/\1/g' <<< "$package" \
+                                       | sed 's/^\(.*\)\.git$/\1/g' \
+                                       | sed 's/[-_.]/-/g' \
+                                       | tr '[:upper:]' '[:lower:]')
+            packages[${key}]=$package
+        done
         already_installed=$("$sysypip" list \
                                 | cut -d' ' -f1 \
                                 | sed 's/[-_.]/-/g' \
                                 | tr '[:upper:]' '[:lower:]' \
                                 | sort)
-        readarray -t missing < <(comm -23 <(echo "$packages") <(echo "$already_installed"))
-        [[ "${#missing[@]}" == 0 ]] || "$sysypip" install --user "$@" # use all packages since we stripped all git paths
+        readarray -t missing < <(comm -23 <(\
+                                            echo "${!packages[*]}" \
+                                                | sed 's/ /\n/g' \
+                                                | sort \
+                                                | uniq \
+                                 ) <(echo "$already_installed"))
+        if [[ "${#missing[@]}" -gt 0 ]]
+        then
+            to_install=()
+            for package in "${missing[@]}"
+            do
+                to_install+=( "${packages[${package}]}" )
+            done
+            export TMPDIR=$XDG_RUNTIME_DIR
+            "$sysypip" install --user "${to_install[@]}"
+        fi
         ;;
 
     uninstall)
@@ -42,6 +58,7 @@ case "$command" in
         ;;
 
     update)
+        export TMPDIR=$XDG_RUNTIME_DIR
         "$sysypip" install --user --upgrade "$@"
         ;;
 
