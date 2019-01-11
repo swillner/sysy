@@ -77,10 +77,19 @@ sync_file () {
         then
             sudo mkdir -p "$(dirname "$system_file")"
             sudo cat "$local_file" | sudo tee "$system_file" >/dev/null
+            if [[ -x "$local_file" ]]
+            then
+                sudo chmod +x "$system_file"
+            fi
             if ask_user "Make accessible for all?" "y"
             then
                 sudo chmod og+rX "$(dirname "$system_file")"
-                sudo chmod og+rX "$system_file"
+                if [[ -x "$local_file" ]]
+                then
+                    sudo chmod og+rx "$system_file"
+                else
+                    sudo chmod og+rX "$system_file"
+                fi
             fi
         else
             info "Skipped $system_file"
