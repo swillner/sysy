@@ -27,11 +27,14 @@ find_local_file_tag () {
     local local_file=$1
     while IFS= read -r tag
     do
-        this_local_file=$tagspath/$tag/dotfiles/$local_file
-        if [[ -e "$this_local_file" ]]
+        if [[ -n "$tag" && -d "$tagspath/$tag" ]]
         then
-            echo "$tag"
-            return
+            this_local_file=$tagspath/$tag/dotfiles/$local_file
+            if [[ -e "$this_local_file" ]]
+            then
+                echo "$tag"
+                return
+            fi
         fi
     done < <(tac "$tagsfile") # read reversely to prioritize later tags in file
 }
@@ -63,6 +66,7 @@ case "$command" in
 
     add)
         tag=$1
+        [[ -d "$tagspath/$tag" ]] || error_and_exit "Tag $tag does not exist"
         file=$2
         [[ -e "$file" ]] || error_and_exit "Please specify a tag and a file or directory"
         [[ ! -L "$file" ]] || error_and_exit "$file is a symlink"
@@ -86,31 +90,34 @@ case "$command" in
     sync)
         while IFS= read -r tag
         do
-            filespath=$tagspath/$tag/dotfiles
-            for local_file in $filespath/*
-            do
-                if [[ -e "$local_file" ]]
-                then
-                    relative_local_file=$(realpath --relative-to "$filespath" "$local_file")
-                    file=$HOME/.$relative_local_file
-                    # make sure to use the tag with the highest priority (unless it is a subfolder to be linked)
-                    [[ -e "$local_file/.sub" ]] || local_file=$tagspath/$(find_local_file_tag "$relative_local_file")/dotfiles/$relative_local_file
-                    sync_file "$local_file" "$file"
-                fi
-            done
-            custompath=$tagspath/$tag/custom
-            if [[ -f "$custompath" ]]
+            if [[ -n "$tag" && -d "$tagspath/$tag" ]]
             then
-                filespath=$tagspath/$tag/files
-                while IFS= read -r line
+                filespath=$tagspath/$tag/dotfiles
+                for local_file in $filespath/*
                 do
-                    readarray -d ';' -t args <<< "$line;"
-                    [[ "${#args[@]}" -eq 3 ]] || error_and_exit "Corrupt line in $custompath"
-                    custom_file=${args[0]}
-                    file=${args[1]}
-                    [[ "${file:0:1}" == "/" ]] || file=$HOME/$file
-                    sync_file "$filespath/$custom_file" "$file"
-                done < "$custompath"
+                    if [[ -e "$local_file" ]]
+                    then
+                        relative_local_file=$(realpath --relative-to "$filespath" "$local_file")
+                        file=$HOME/.$relative_local_file
+                        # make sure to use the tag with the highest priority (unless it is a subfolder to be linked)
+                        [[ -e "$local_file/.sub" ]] || local_file=$tagspath/$(find_local_file_tag "$relative_local_file")/dotfiles/$relative_local_file
+                        sync_file "$local_file" "$file"
+                    fi
+                done
+                custompath=$tagspath/$tag/custom
+                if [[ -f "$custompath" ]]
+                then
+                    filespath=$tagspath/$tag/files
+                    while IFS= read -r line
+                    do
+                        readarray -d ';' -t args <<< "$line;"
+                        [[ "${#args[@]}" -eq 3 ]] || error_and_exit "Corrupt line in $custompath"
+                        custom_file=${args[0]}
+                        file=${args[1]}
+                        [[ "${file:0:1}" == "/" ]] || file=$HOME/$file
+                        sync_file "$filespath/$custom_file" "$file"
+                    done < "$custompath"
+                fi
             fi
         done < "$tagsfile"
         ;;

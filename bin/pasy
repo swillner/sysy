@@ -27,10 +27,13 @@ get_packages () {
     local module=$1
     while IFS= read -r tag
     do
-        packagesfile=$tagspath/$tag/packages/$module
-        if [[ -f "$packagesfile" ]]
+        if [[ -n "$tag" && -d "$tagspath/$tag" ]]
         then
-            grep -v -e "^#" < "$packagesfile" | cut -f1 -d' ' | grep -v "^$"
+            packagesfile=$tagspath/$tag/packages/$module
+            if [[ -f "$packagesfile" ]]
+            then
+                grep -v -e "^#" < "$packagesfile" | cut -f1 -d' ' | grep -v "^$"
+            fi
         fi
     done < "$tagsfile"
 }
@@ -85,9 +88,10 @@ case "$command" in
     edit)
         module=$1
         [[ -n "$module" ]] || error_and_exit "Please specify a module"
+        check_module "$module"
         tag=$2
         [[ -n "$tag" ]] || error_and_exit "Please specify a tag"
-        check_module "$module"
+        [[ -d "$tagspath/$tag" ]] || error_and_exit "Tag $tag does not exist"
         packages_file=$tagspath/$tag/packages/$module
         open_in_editor "$packages_file"
         ;;
@@ -95,11 +99,12 @@ case "$command" in
     install)
         module=$1
         [[ -n "$module" ]] || error_and_exit "Please specify a module"
+        check_module "$module"
         tag=$2
         [[ -n "$tag" ]] || error_and_exit "Please specify a tag"
+        [[ -d "$tagspath/$tag" ]] || error_and_exit "Tag $tag does not exist"
         shift 2
         [[ -n "$1" ]] || error_and_exit "Please specify at least one package to install"
-        check_module "$module"
         packagespath=$tagspath/$tag/packages
         packagesfile=$packagespath/$module
         mkdir -p "$packagespath"
@@ -134,11 +139,12 @@ case "$command" in
     uninstall)
         module=$1
         [[ -n "$module" ]] || error_and_exit "Please specify a module"
+        check_module "$module"
         tag=$2
         [[ -n "$tag" ]] || error_and_exit "Please specify a tag"
+        [[ -d "$tagspath/$tag" ]] || error_and_exit "Tag $tag does not exist"
         shift 2
         [[ -n "$1" ]] || error_and_exit "Please specify at least one package to uninstall"
-        check_module "$module"
         call_module "$module" uninstall "$@"
         packagespath=$tagspath/$tag/packages
         packagesfile=$packagespath/$module

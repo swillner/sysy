@@ -22,11 +22,14 @@ find_local_file () {
     local local_file
     while IFS= read -r tag
     do
-        local_file=$tagspath/$tag/system$system_file
-        if [[ -f "$local_file" ]]
+        if [[ -n "$tag" && -d "$tagspath/$tag" ]]
         then
-            echo "$local_file"
-            return
+            local_file=$tagspath/$tag/system$system_file
+            if [[ -f "$local_file" ]]
+            then
+                echo "$local_file"
+                return
+            fi
         fi
     done < <(tac "$tagsfile") # read reversely to prioritize later tags in file
 }
@@ -91,6 +94,7 @@ case "$command" in
 
     add)
         tag=$1
+        [[ -d "$tagspath/$tag" ]] || error_and_exit "Tag $tag does not exist"
         system_file=$2
         [[ -f "$system_file" ]] || error_and_exit "Please specify a tag and a system file"
         add_file "$tag" "$system_file"
@@ -118,17 +122,20 @@ case "$command" in
             shopt -s globstar nullglob
             while IFS= read -r tag
             do
-                filespath=$tagspath/$tag/system
-                for local_file in $filespath/**
-                do
-                    if [[ -f "$local_file" ]]
-                    then
-                        local_file=$(realpath --relative-to "$filespath" "$local_file")
-                        system_file=/$local_file
-                        local_file=$(find_local_file "$system_file") # really find local file with highest priority
-                        sync_file "$local_file" "$system_file"
+                if [[ -n "$tag" && -d "$tagspath/$tag" ]]
+                then
+                    filespath=$tagspath/$tag/system
+                    for local_file in $filespath/**
+                    do
+                        if [[ -f "$local_file" ]]
+                        then
+                            local_file=$(realpath --relative-to "$filespath" "$local_file")
+                            system_file=/$local_file
+                            local_file=$(find_local_file "$system_file") # really find local file with highest priority
+                            sync_file "$local_file" "$system_file"
                     fi
-                done
+                    done
+                fi
             done < "$tagsfile"
         else
             local_file=$(find_local_file "$system_file")
