@@ -5,15 +5,17 @@ sysypath=$(dirname "$(dirname "$(realpath "$0")")")
 tagsfile=$confdir/tags
 tagspath=$(realpath "$sysypath/tags")
 
-if command -v icdiff >/dev/null 2>/dev/null
-then
-    nicediff="icdiff"
-else
-    nicediff="diff -y"
-fi
-
 # shellcheck source=/dev/null
 source "$sysypath/scripts/include.sh"
+
+ask_to_install_if_not_found diff && sudo apt-get install diffutils
+
+if command -v icdiff >/dev/null 2>/dev/null
+then
+    nicediff=("icdiff")
+else
+    nicediff=("diff" "-y")
+fi
 
 find_local_file () {
     local system_file=$1
@@ -52,7 +54,7 @@ sync_file () {
     then
         if ! sudo diff "$system_file" "$local_file" >/dev/null 2>/dev/null
         then
-            sudo "$nicediff" "$system_file" "$local_file" | less -X -F
+            sudo "${nicediff[@]}" "$system_file" "$local_file" | less -X -F
             if ask_user "Update file?" "y"
             then
                 sudo cat "$local_file" | sudo tee "$system_file" >/dev/null
