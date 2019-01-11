@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -e
 confdir=$HOME/.sysy.d
-sysypath=$(realpath "$confdir/bin/..")
+sysypath=$(dirname "$(dirname "$(realpath "$0")")")
 tagsfile=$confdir/tags
 tagspath=$(realpath "$sysypath/tags")
 modulespath=$(realpath "$sysypath/modules")

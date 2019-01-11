@@ -1,20 +1,14 @@
 #!/usr/bin/env bash
 set -e
 
-if ! command -v realpath >/dev/null 2>/dev/null
+if ! (command -v realpath && command -v dirname) >/dev/null 2>/dev/null
 then
-    echo "Could not find realpath executable" 1>&2
+    echo "Could not find realpath or dirname executable, trying to install..." 1>&2
     sudo apt-get install coreutils
 fi
 
-if ! command -v diff >/dev/null 2>/dev/null
-then
-    echo "Could not find diff executable" 1>&2
-    sudo apt-get install diffutils
-fi
-
 confdir=$HOME/.sysy.d
-sysypath=$(realpath "$confdir/bin/..")
+sysypath=$(dirname "$(dirname "$(realpath "$0")")")
 tagsfile=$confdir/tags
 tagspath=$(realpath "$sysypath/tags")
 
