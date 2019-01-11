@@ -119,6 +119,7 @@ Commands:
     update                      update git repositories
 
 EOF
+        print_global_options
         exit 1
         ;;
 

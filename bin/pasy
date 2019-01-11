@@ -184,7 +184,7 @@ Usage:
 
 Commands:
 
-   bootstrap [MODULE]             bootstrap model or all used models
+   bootstrap [MODULE]             bootstrap mudule or all used mudules
    diff      MODULE               diff installed and wanted packages
    edit      TAG MODULE           edit wanted packages
    install   TAG MODULE PACKAGES  install packages
@@ -193,6 +193,7 @@ Commands:
    update    [MODULE]             update packages
 
 EOF
+        print_global_options
         exit 1
         ;;
 

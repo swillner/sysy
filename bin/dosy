@@ -163,8 +163,8 @@ Commands:
     add  TAG FILE [CUSTOMPATH]  add dotfile or custom file to dosy
     sync                        synchronize
     unhandle FILE               remove dotfile from dosy
-
 EOF
+        print_global_options
         exit 1
         ;;
 

@@ -32,6 +32,16 @@ error_and_exit () {
     exit "${2:-1}"
 }
 
+print_global_options () {
+    cat <<EOF
+
+Options:
+
+    Use environment variable ALWAYS_ANSWER to always select "y" or "n"
+    in questions.
+EOF
+}
+
 ask_user () {
     local question=$1
     local default=$2
@@ -44,7 +54,12 @@ ask_user () {
     fi
     local response
     echo -e -n "$COLOR_ORANGE$question$COLOR_CLEAR $COLOR_LIGHT_GRAY$default_indicator$COLOR_CLEAR "
-    read -r response < /dev/tty
+    if [[ -z "$ALWAYS_ANSWER" ]]
+    then
+        read -r response < /dev/tty
+    else
+        response=$ALWAYS_ANSWER
+    fi
     case $response in
         [yY][eE][sS]|[yY]|'')
             if [[ "$default" != "y" && "$response" == "" ]]

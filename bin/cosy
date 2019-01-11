@@ -165,8 +165,8 @@ Commands:
     add  TAG FILE  add system file to cosy
     edit FILE      edit system file handled by cosy
     sync [FILE]    synchronize
-
 EOF
+        print_global_options
         exit 1
         ;;
 
