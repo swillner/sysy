@@ -139,7 +139,7 @@ open_in_editor () {
         then
             $EDITOR "$@"
         else
-            emacs "$@"
+            nano "$@"
         fi
     fi
 }
