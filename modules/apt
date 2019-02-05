@@ -28,21 +28,21 @@ case "$command" in
         ;;
 
     install)
-        sudo aptitude -q=3 install "$@"
+        sudo aptitude install "$@"
         ;;
 
     sync)
         packages=$(printf '%s\n' "$@" | sort | uniq)
         already_installed=$(dpkg --get-selections | grep -v deinstall | sed 's/:amd64//g' | awk '{print $1}' | sort)
         readarray -t missing < <(comm -23 <(echo "$packages") <(echo "$already_installed"))
-        [[ "${#missing[@]}" == 0 ]] || sudo aptitude -q=3 install "${missing[@]}"
+        [[ "${#missing[@]}" == 0 ]] || sudo aptitude install "${missing[@]}"
         if command -v deborphan >/dev/null 2>/dev/null
         then
             readarray -t to_remove < <(get_packages_to_remove "$packages")
             if [[ "${#to_remove[@]}" -gt 0 ]]
             then
                 readarray -t to_remove < <(sudo apt-get -qq -s purge "${to_remove[@]}" 2>/dev/null | cut -f2 -d ' ')
-                [[ "${#to_remove[@]}" == 0 ]] || sudo aptitude -q=3 purge "${to_remove[@]}" || true
+                [[ "${#to_remove[@]}" == 0 ]] || sudo aptitude purge "${to_remove[@]}" || true
             fi
         fi
         ;;
