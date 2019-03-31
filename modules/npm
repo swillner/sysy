@@ -27,7 +27,7 @@ case "$command" in
         ;;
 
     update)
-        npm update "$@"
+        npm update -g "$@"
         ;;
 
     *)
