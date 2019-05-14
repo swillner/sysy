@@ -19,6 +19,23 @@ COLOR_LIGHT_GRAY='\033[0;37m'
 COLOR_WHITE='\033[1;37m'
 COLOR_CLEAR='\033[0m'
 
+if command -v icdiff >/dev/null 2>/dev/null
+then
+    nicediff=("icdiff")
+else
+    nicediff=("diff" "-y")
+fi
+
+show_diff () {
+    ask_to_install_if_not_found "${nicediff[0]}" && sudo apt-get install diffutils
+    if [[ "$3" == "sudo" ]]
+    then
+        sudo "${nicediff[@]}" "$1" "$2" | less -X -F
+    else
+        "${nicediff[@]}" "$1" "$2" | less -X -F
+    fi
+}
+
 info () {
     echo -e "$COLOR_LIGHT_BLUE$1$COLOR_CLEAR"
 }
@@ -42,6 +59,20 @@ Options:
 EOF
 }
 
+get_response () {
+    local question=$1
+    local default_indicator=$2
+    local response
+    if [[ -z "$ALWAYS_ANSWER" ]]
+    then
+        echo -e -n "$COLOR_ORANGE$question$COLOR_CLEAR $COLOR_LIGHT_GRAY$default_indicator$COLOR_CLEAR " > /dev/tty
+        read -r response < /dev/tty
+    else
+        response=$ALWAYS_ANSWER
+    fi
+    echo "$response"
+}
+
 ask_user () {
     local question=$1
     local default=$2
@@ -53,13 +84,7 @@ ask_user () {
         default_indicator="[y/N]"
     fi
     local response
-    echo -e -n "$COLOR_ORANGE$question$COLOR_CLEAR $COLOR_LIGHT_GRAY$default_indicator$COLOR_CLEAR "
-    if [[ -z "$ALWAYS_ANSWER" ]]
-    then
-        read -r response < /dev/tty
-    else
-        response=$ALWAYS_ANSWER
-    fi
+    response=$(get_response "$question" "$default_indicator")
     case $response in
         [yY][eE][sS]|[yY]|'')
             if [[ "$default" != "y" && "$response" == "" ]]
@@ -76,8 +101,8 @@ ask_user () {
 }
 
 ask_run () {
-    cmd=$1
-    desc=$2
+    local cmd=$1
+    local desc=$2
     [[ -z "$desc" ]] || desc=" ($desc)"
     echo -e "${COLOR_ORANGE}Would run$desc\\n$COLOR_YELLOW  $cmd$COLOR_RESET"
     if ask_user "Run?" "y"
@@ -91,24 +116,40 @@ ensure_link () {
     local to=$2
     if [[ ! -e "$to" ]]
     then
-        ln -sf "$from" "$to"
+        ln -s "$from" "$to"
     else
+        local real
         real=$(realpath "$to")
         if [[ "$real" != "$from" ]]
         then
             if [[ "$real" == "$to" ]]
             then
-                if ask_user "Replace $to by link to $from?" "y"
-                then
-                    ln -sf "$from" "$to"
-                fi
+                local question="Replace $to by link to $from?"
             else
-                if ask_user "Replace $to by link to $from (currently to $real)?" "y"
-                then
-                    rm "$to"
-                    ln -s "$from" "$to"
-                fi
+                local question="Replace $to by link to $from (currently to $real)?"
             fi
+            while true
+            do
+                case $(get_response "$question" "[Y/n/d/c] (d=show diff, c=copy and then link)") in
+                    [yY][eE][sS]|[yY]|'')
+                        rm "$to"
+                        ln -s "$from" "$to"
+                        break
+                        ;;
+                    [cC])
+                        cp -f "$real" "$from"
+                        rm "$to"
+                        ln -s "$from" "$to"
+                        break
+                        ;;
+                    [dD])
+                        show_diff "$from" "$to"
+                        ;;
+                    [nN])
+                        break
+                        ;;
+                esac
+            done
         fi
     fi
 }
