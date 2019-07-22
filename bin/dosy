@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 set -e
+shopt -s dotglob
 confdir=$HOME/.sysy.d
 sysypath=$(dirname "$(dirname "$(realpath "$0")")")
 tagsfile=$confdir/tags
