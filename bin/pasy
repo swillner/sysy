@@ -153,7 +153,7 @@ case "$command" in
             packages_str=$(cat "$packagesfile")
             for p in "$@"
             do
-                packages_str=$(echo "$packages_str" | grep -v -e "^$p #")
+                packages_str=$(echo "$packages_str" | grep -v -e "^$p\$" | grep -v -e "^$p ")
             done
             echo "$packages_str" > "$packagesfile"
         fi
