@@ -8,3 +8,6 @@ tagsfile=$confdir/tags
 
 # shellcheck source=/dev/null
 source "$sysypath/modules/pip3" "$@"
+
+unset sysypip
+unset sysypython

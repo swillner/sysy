@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 set -e
 
-sysypip=pip3
-sysypython=python3
+[[ -n "$sysypip" ]] || sysypip=pip3
+[[ -n "$sysypython" ]] || sysypython=python3
 
 ask_to_install_if_not_found "$sysypython" && sudo apt-get install "$sysypython"
 ask_to_install_if_not_found "$sysypip" && (curl -s https://bootstrap.pypa.io/get-pip.py | "$sysypython" - --user)
