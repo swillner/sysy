@@ -48,7 +48,7 @@ sync_file () {
     then
         if ! sudo diff "$system_file" "$local_file" >/dev/null 2>/dev/null
         then
-            show_diff "$system_file" "$local_file"
+            show_diff "$system_file" "$local_file" sudo
             if ask_user "Update file?" "y"
             then
                 sudo cat "$local_file" | sudo tee "$system_file" >/dev/null
