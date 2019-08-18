@@ -75,7 +75,7 @@ case "$command" in
         if [[ -z "$custom_file" ]]
         then
             file=$(realpath --relative-to "$HOME" "$file")
-            [[ "$(dirname "$file")" == "." && "${file:0:1}" == "." && "$file" != "." ]] || error_and_exit "$file is not a dotfile"
+            [[ "${file:0:1}" == "." && "${file:1:1}" != "." && "$file" != "." ]] || error_and_exit "$file is not a dotfile"
             undotted_file=${file:1}
             dotfilespath=$tagspath/$tag/dotfiles
             local_file=$dotfilespath/$undotted_file
