@@ -121,6 +121,13 @@ case "$command" in
         fi
         ;;
 
+    list)
+        module=$1
+        [[ -n "$module" ]] || error_and_exit "Please specify a module"
+        check_module "$module"
+        get_packages "$module"
+        ;;
+
     sync)
         module=$1
         if [[ -z "$module" ]]
@@ -188,6 +195,7 @@ Commands:
    diff      MODULE               diff installed and wanted packages
    edit      TAG MODULE           edit wanted packages
    install   TAG MODULE PACKAGES  install packages
+   list      MODULE               list packages to install
    sync      [MODULE]             synchronize
    uninstall TAG MODULE PACKAGES  uninstall packages
    update    [MODULE]             update packages
