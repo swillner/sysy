@@ -14,11 +14,19 @@ case "$command" in
     install|sync)
         packages=$(printf '%s\n' "$@" | sort | uniq)
         already_installed=$(cargo install --list \
-                                | sed -n 's/^\(.*\) .*:$/\1/p' \
+                                | awk 'NF==3{{match($3,"\\(([^#]*).*\\):",a)}print a[1]}NF==2{print $1}' \
                                 | sort)
         readarray -t missing < <(comm -23 <(echo "$packages") <(echo "$already_installed"))
         export TMPDIR=$XDG_RUNTIME_DIR
-        [[ "${#missing[@]}" == 0 ]] || cargo install "${missing[@]}"
+        for package in "${missing[@]}"
+        do
+            if [[ "$package" == https://* ]] || [[ "$package" == http://* ]]
+            then
+                cargo install --git "$package"
+            else
+                cargo install "$package"
+            fi
+        done
         ;;
 
     uninstall)
