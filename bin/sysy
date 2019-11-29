@@ -36,6 +36,9 @@ case "$command" in
 
         info "Syncing system configuration..."
         bash "$sysypath/bin/cosy" sync
+
+        sudo apt-get update
+
         info "Syncing packages..."
         bash "$sysypath/bin/pasy" sync
         info "Syncing dotfiles..."
