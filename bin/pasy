@@ -115,7 +115,11 @@ case "$command" in
             for p in "$@"
             do
                 desc=$(call_module "$module" desc "$p")
-                packages_str=$(echo -e "$packages_str\\n$p # $desc" | grep -v "^$" | sort | uniq)
+                if [[ -n "$desc" ]]
+                then
+                    desc=" # $desc"
+                fi
+                packages_str=$(echo -e "$packages_str\\n$p$desc" | grep -v "^$" | sort | uniq)
             done
             echo "$packages_str" > "$packagesfile"
         fi
