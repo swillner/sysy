@@ -10,16 +10,24 @@ then
     bash <(curl -s -S -L https://raw.githubusercontent.com/moovweb/gvm/master/binscripts/gvm-installer) master "$GVMPARENTPATH"
     # shellcheck source=/dev/null
     source "$GVMPARENTPATH/gvm/scripts/gvm"
-    if ask_user "Compile go1.10 from source?" "y"
+    defaultversion="go1.13"
+    goversion=$(get_response "Install go version:" "[$defaultversion]")
+    if [[ -z "$goversion" ]]
     then
-        gvm install go1.9 --binary
-        gvm use go1.9
-        export GOROOT_BOOTSTRAP=$GOROOT
-        gvm install go1.10 --with-build-tools
-    else
-        gvm install go1.10 --binary --with-build-tools
+        goversion="$defaultversion"
     fi
-    gvm use go1.10 --default
+    if ask_user "Compile $goversion from source?" "y"
+    then
+        gvm install "$goversion" --binary --name="${goversion}-binary"
+        gvm use "${goversion}-binary"
+        export GOROOT_BOOTSTRAP=$GOROOT
+        gvm install "${goversion}"
+        gvm uninstall "${goversion}-binary"
+    else
+        gvm install "$goversion" --binary
+    fi
+    gvm use "$goversion" --default
+    export GOPATH
 fi
 
 command=$1
@@ -36,7 +44,7 @@ case "$command" in
 
     sync)
         packages=$(printf '%s\n' "$@" | sort | uniq)
-        already_installed=$(go list '...' | sort)
+        already_installed=$(go list -f '{{if not .Standard}}{{.ImportPath}}{{end}}' all | sort |uniq)
         readarray -t missing < <(comm -23 <(echo "$packages") <(echo "$already_installed"))
         [[ "${#missing[@]}" == 0 ]] || go get "${missing[@]}"
         ;;
