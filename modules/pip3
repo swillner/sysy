@@ -27,10 +27,12 @@ case "$command" in
             key=$(sed 's/^git+[a-zA-Z0-9.:\/_\-]*\/\([^\/@]*\)\(@.*\)\?$/\1/g' <<< "$package" \
                                        | sed 's/^\(.*\)\.git$/\1/g' \
                                        | sed 's/[-_.]/-/g' \
+                                       | sed 's/\[.*\]//g' \
                                        | tr '[:upper:]' '[:lower:]')
             packages[${key}]=$package
         done
         already_installed=$("$sysypip" list \
+                                | tail -n +3 \
                                 | cut -d' ' -f1 \
                                 | sed 's/[-_.]/-/g' \
                                 | tr '[:upper:]' '[:lower:]' \
