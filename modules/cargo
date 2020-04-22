@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 set -e
 
+PATH=$PATH:$HOME/.cargo/bin
 ask_to_install_if_not_found cargo && (curl https://sh.rustup.rs -sSf | sh)
 
 command=$1

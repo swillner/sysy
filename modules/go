@@ -2,11 +2,14 @@
 set -e
 
 export GOMAXPROCS=1
+GVMPARENTPATH="$HOME/.local"
+
+# shellcheck source=/dev/null
+[[ -f "$GVMPARENTPATH/gvm/scripts/gvm" ]] && source "$GVMPARENTPATH/gvm/scripts/gvm"
 
 if ask_to_install_if_not_found go
 then
     export GVM_NO_UPDATE_PROFILE=1
-    GVMPARENTPATH="$HOME/.local"
     bash <(curl -s -S -L https://raw.githubusercontent.com/moovweb/gvm/master/binscripts/gvm-installer) master "$GVMPARENTPATH"
     # shellcheck source=/dev/null
     source "$GVMPARENTPATH/gvm/scripts/gvm"

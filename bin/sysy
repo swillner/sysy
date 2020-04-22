@@ -37,7 +37,7 @@ case "$command" in
         info "Syncing system configuration..."
         bash "$sysypath/bin/cosy" sync
 
-        sudo apt-get update
+        ask_user "Update apt packages? (requires sudo)" "y" && sudo apt-get update
 
         info "Syncing packages..."
         bash "$sysypath/bin/pasy" sync

@@ -4,6 +4,7 @@ set -e
 [[ -n "$sysypip" ]] || sysypip=pip3
 [[ -n "$sysypython" ]] || sysypython=python3
 
+PATH=$PATH:$HOME/.local/bin
 ask_to_install_if_not_found "$sysypython" && sudo apt-get install "$sysypython"
 ask_to_install_if_not_found "$sysypip" && (curl -s https://bootstrap.pypa.io/get-pip.py | "$sysypython" - --user)
 
