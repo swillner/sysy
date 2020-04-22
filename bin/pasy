@@ -197,11 +197,11 @@ Commands:
 
    bootstrap [MODULE]             bootstrap mudule or all used mudules
    diff      MODULE               diff installed and wanted packages
-   edit      TAG MODULE           edit wanted packages
-   install   TAG MODULE PACKAGES  install packages
+   edit      MODULE TAG           edit wanted packages
+   install   MODULE TAG PACKAGES  install packages
    list      MODULE               list packages to install
    sync      [MODULE]             synchronize
-   uninstall TAG MODULE PACKAGES  uninstall packages
+   uninstall MODULE TAG PACKAGES  uninstall packages
    update    [MODULE]             update packages
 
 EOF
