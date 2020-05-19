@@ -9,7 +9,7 @@ tagspath=$(realpath "$sysypath/tags")
 source "$sysypath/scripts/include.sh"
 
 find_local_file () {
-    local system_file=$1
+    local system_file=$(realpath "$1")
     local local_file
     while IFS= read -r tag
     do
@@ -32,7 +32,7 @@ is_text_file () {
 add_file () {
     sudo -v
     local tag=$1
-    local system_file=$2
+    local system_file=$(realpath "$2")
     [[ -f "$system_file" ]] || error_and_exit "Could not find $system_file"
     local local_file=$tagspath/$tag/system$system_file
     mkdir -p "$(dirname "$local_file")"
@@ -42,7 +42,7 @@ add_file () {
 sync_file () {
     sudo -v
     local local_file=$1
-    local system_file=$2
+    local system_file=$(realpath "$2")
     [[ -f "$local_file" ]] || error_and_exit "$local_file not handled by cosy"
     if sudo ls "$system_file" >/dev/null 2>/dev/null
     then
