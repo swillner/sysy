@@ -67,7 +67,7 @@ case "$command" in
         module=$1
         if [[ -z "$module" ]]
         then
-            for module in $modulespath/*
+            for module in "$modulespath"/*
             do
                 module=$(basename "$module")
                 call_module_for_all_packages "$module" "" "Bootstrapping"
@@ -136,7 +136,7 @@ case "$command" in
         module=$1
         if [[ -z "$module" ]]
         then
-            for module in $modulespath/*
+            for module in "$modulespath"/*
             do
                 module=$(basename "$module")
                 call_module_for_all_packages "$module" sync "Syncing"
@@ -174,7 +174,7 @@ case "$command" in
         module=$1
         if [[ -z "$module" ]]
         then
-            for module in $modulespath/*
+            for module in "$modulespath"/*
             do
                 module=$(basename "$module")
                 call_module_for_all_packages "$module" update "Updating"

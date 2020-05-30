@@ -9,7 +9,8 @@ tagspath=$(realpath "$sysypath/tags")
 source "$sysypath/scripts/include.sh"
 
 find_local_file () {
-    local system_file=$(sudo realpath "$1")
+    local system_file
+    system_file=$(realpath "$1")
     local local_file
     while IFS= read -r tag
     do
@@ -30,9 +31,9 @@ is_text_file () {
 }
 
 add_file () {
-    sudo -v
     local tag=$1
-    local system_file=$(sudo realpath "$2")
+    local system_file
+    system_file=$(realpath "$2")
     [[ -f "$system_file" ]] || error_and_exit "Could not find $system_file"
     local local_file=$tagspath/$tag/system$system_file
     mkdir -p "$(dirname "$local_file")"
@@ -40,18 +41,18 @@ add_file () {
 }
 
 sync_file () {
-    sudo -v
     local local_file=$1
-    local system_file=$(sudo realpath "$2")
+    local system_file
+    system_file=$(realpath "$2")
     [[ -f "$local_file" ]] || error_and_exit "$local_file not handled by cosy"
-    if sudo ls "$system_file" >/dev/null 2>/dev/null
+    if ls "$system_file" >/dev/null 2>/dev/null
     then
-        if ! sudo diff "$system_file" "$local_file" >/dev/null 2>/dev/null
+        if ! diff "$system_file" "$local_file" >/dev/null 2>/dev/null
         then
-            show_diff "$system_file" "$local_file" sudo
+            show_diff "$system_file" "$local_file"
             if ask_user "Update file?" "y"
             then
-                sudo cat "$local_file" | sudo tee "$system_file" >/dev/null
+                <"$local_file" tee "$system_file" >/dev/null
             else
                 info "Skipped $system_file"
             fi
@@ -66,20 +67,20 @@ sync_file () {
         fi
         if ask_user "Add file to system?" "y"
         then
-            sudo mkdir -p "$(dirname "$system_file")"
-            sudo cat "$local_file" | sudo tee "$system_file" >/dev/null
+            mkdir -p "$(dirname "$system_file")"
+            <"$local_file" tee "$system_file" >/dev/null
             if [[ -x "$local_file" ]]
             then
-                sudo chmod +x "$system_file"
+                chmod +x "$system_file"
             fi
             if ask_user "Make accessible for all?" "y"
             then
-                sudo chmod og+rX "$(dirname "$system_file")"
+                chmod og+rX "$(dirname "$system_file")"
                 if [[ -x "$local_file" ]]
                 then
-                    sudo chmod og+rx "$system_file"
+                    chmod og+rx "$system_file"
                 else
-                    sudo chmod og+rX "$system_file"
+                    chmod og+rX "$system_file"
                 fi
             fi
         else
@@ -116,6 +117,7 @@ case "$command" in
         ;;
 
     sync)
+        [[ $(whoami) == "root" ]] || exec sudo --preserve-env -- "$0" "$command" "$@"
         system_file=$1
         if [[ -z "$system_file" ]]
         then
@@ -125,7 +127,7 @@ case "$command" in
                 if [[ -n "$tag" && -d "$tagspath/$tag" ]]
                 then
                     filespath=$tagspath/$tag/system
-                    for local_file in $filespath/**
+                    for local_file in "$filespath"/**
                     do
                         if [[ -f "$local_file" ]]
                         then

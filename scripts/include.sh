@@ -28,12 +28,7 @@ fi
 
 show_diff () {
     ask_to_install_if_not_found "${nicediff[0]}" && sudo apt-get install diffutils
-    if [[ "$3" == "sudo" ]]
-    then
-        sudo "${nicediff[@]}" "$1" "$2" | less -X -F
-    else
-        "${nicediff[@]}" "$1" "$2" | less -X -F
-    fi
+    "${nicediff[@]}" "$1" "$2" | less -X -F
 }
 
 info () {
