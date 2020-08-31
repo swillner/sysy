@@ -10,7 +10,7 @@ source "$sysypath/scripts/include.sh"
 
 find_local_file () {
     local system_file
-    system_file=$(realpath "$1")
+    system_file=$1
     local local_file
     while IFS= read -r tag
     do
@@ -43,16 +43,29 @@ add_file () {
 sync_file () {
     local local_file=$1
     local system_file
-    system_file=$(realpath "$2")
+    if ! system_file=$(realpath "$2" 2>/dev/null)
+    then
+        local system_dir
+        system_dir=$(dirname "$2")
+        if ask_user "Create $system_dir?" "y"
+        then
+            sudo mkdir -p "$system_dir"
+        fi
+        if ! system_file=$(realpath "$2" 2>/dev/null)
+        then
+            info "Skipping $2"
+            return
+        fi
+    fi
     [[ -f "$local_file" ]] || error_and_exit "$local_file not handled by cosy"
     if ls "$system_file" >/dev/null 2>/dev/null
     then
         if ! diff "$system_file" "$local_file" >/dev/null 2>/dev/null
         then
             show_diff "$system_file" "$local_file"
-            if ask_user "Update file?" "y"
+            if ask_user "Update $system_file?" "y"
             then
-                <"$local_file" tee "$system_file" >/dev/null
+                cat "$local_file" | sudo tee "$system_file" >/dev/null
             else
                 info "Skipped $system_file"
             fi

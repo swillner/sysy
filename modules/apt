@@ -10,7 +10,6 @@ get_packages_to_remove () {
 }
 
 ask_to_install_if_not_found aptitude && sudo apt-get install aptitude
-ask_to_install_if_not_found dpkg && sudo apt-get install dpkg
 
 command=$1
 shift || return 0
@@ -23,7 +22,7 @@ case "$command" in
         ;;
 
     diff)
-        diff=$(comm -23 <(aptitude search '?installed !?automatic' | cut -b 4- | cut -d ' ' -f1 | sort) <(echo "$@" | sort))
+        diff=$(comm -23 <(aptitude search '?installed !?automatic' -F '%p' | sort) <(echo "$@" | sort))
         echo "$diff"
         ;;
 
@@ -33,9 +32,16 @@ case "$command" in
 
     sync)
         packages=$(printf '%s\n' "$@" | sort | uniq)
-        already_installed=$(dpkg --get-selections | grep -v deinstall | sed 's/:amd64//g' | awk '{print $1}' | sort)
-        readarray -t missing < <(comm -23 <(echo "$packages") <(echo "$already_installed"))
-        [[ "${#missing[@]}" == 0 ]] || sudo aptitude install "${missing[@]}"
+        already_installed=$(aptitude search '?installed' -F '%p' | sort)
+        readarray -t not_installed < <(comm -23 <(echo "$packages") <(echo "$already_installed"))
+        if [[ "${#not_installed[@]}" -gt 0 ]]
+        then
+            available=$(aptitude search '!?installed' -F '%p' | sort)
+            readarray -t not_found < <(comm -23 <(printf '%s\n' "${not_installed[@]}") <(echo "$available"))
+            [[ "${#not_found[@]}" == 0 ]] || error "Packages not found: ${not_found[*]}"
+            readarray -t to_install < <(comm -12 <(printf '%s\n' "${not_installed[@]}") <(echo "$available"))
+            [[ "${#to_install[@]}" == 0 ]] || sudo aptitude install "${to_install[@]}"
+        fi
         if command -v deborphan >/dev/null 2>/dev/null
         then
             readarray -t to_remove < <(get_packages_to_remove "$packages")
