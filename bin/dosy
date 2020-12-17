@@ -44,6 +44,7 @@ sync_file () {
     local local_file=$1
     local file=$2
     [[ -e "$local_file" ]] || error_and_exit "$local_file not found"
+    local_file=$(realpath "$local_file")
     if [[ -d "$local_file" && -e "$local_file/.sub" ]]
     then
         [[ ! -L "$file" ]] || error_and_exit "$file is a link"
