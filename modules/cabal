@@ -1,19 +1,26 @@
 #!/usr/bin/env bash
 set -e
 
-ask_to_install_if_not_found cabal && sudo apt-get install cabal-install
+ensure_cabal () {
+    if ask_to_install_if_not_found cabal
+    then
+        sudo apt-get install cabal-install || error_and_exit "Could not install cabal"
+    fi
+}
 
 command=$1
 shift || return 0
 case "$command" in
 
     desc)
+        ensure_cabal
         package=$1
         desc=$(cabal info "$package" | grep '^    Synopsis:      ')
         echo "${desc:19:120}"
         ;;
 
     install|sync)
+        ensure_cabal
         packages=$(printf '%s\n' "$@" | sort | uniq)
         already_installed=$(cabal list --installed 2>/dev/null \
                                 | sed -n 's/^\* \(.*\)$/\1/p' \

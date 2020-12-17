@@ -9,28 +9,37 @@ get_packages_to_remove () {
     rm "$tmp"
 }
 
-ask_to_install_if_not_found aptitude && sudo apt-get install aptitude
+ensure_aptitude () {
+    if ask_to_install_if_not_found aptitude
+    then
+        sudo apt-get install aptitude
+    fi
+}
 
 command=$1
 shift || return 0
 case "$command" in
 
     desc)
+        ensure_aptitude
         package=$1
         desc=$(aptitude show "$package" | grep '^Description: ')
         echo "${desc:13:120}"
         ;;
 
     diff)
+        ensure_aptitude
         diff=$(comm -23 <(aptitude search '?installed !?automatic' -F '%p' | sort) <(echo "$@" | sort))
         echo "$diff"
         ;;
 
     install)
+        ensure_aptitude
         sudo aptitude install "$@"
         ;;
 
     sync)
+        ensure_aptitude
         packages=$(printf '%s\n' "$@" | sort | uniq)
         already_installed=$(aptitude search '?installed' -F '%p' | sort)
         readarray -t not_installed < <(comm -23 <(echo "$packages") <(echo "$already_installed"))
@@ -54,10 +63,12 @@ case "$command" in
         ;;
 
     uninstall)
+        ensure_aptitude
         sudo aptitude purge "$@"
         ;;
 
     update)
+        ensure_aptitude
         sudo apt-get -q install "$@"
         ;;
 

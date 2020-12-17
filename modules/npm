@@ -1,7 +1,12 @@
 #!/usr/bin/env bash
 set -e
 
-ask_to_install_if_not_found npm && sudo apt-get install npm
+ensure_npm () {
+    if ask_to_install_if_not_found npm
+    then
+        sudo apt-get install npm || error_and_exit "Could not install npm"
+    fi
+}
 
 command=$1
 shift || return 0
@@ -12,10 +17,12 @@ case "$command" in
         ;;
 
     install)
+        ensure_npm
         npm install -g "$@"
         ;;
 
     sync)
+        ensure_npm
         packages=$(printf '%s\n' "$@" | sort | uniq)
         already_installed=$(find "$(npm root -g)" -maxdepth 1 -mindepth 1 -type d -printf '%P\n' | sort)
         readarray -t missing < <(comm -23 <(echo "$packages") <(echo "$already_installed"))
@@ -23,10 +30,12 @@ case "$command" in
         ;;
 
     uninstall)
+        ensure_npm
         npm uninstall -g "$@"
         ;;
 
     update)
+        ensure_npm
         npm update -g "$@"
         ;;
 

@@ -2,7 +2,13 @@
 set -e
 
 PATH=$PATH:$HOME/.cargo/bin
-ask_to_install_if_not_found cargo && (curl https://sh.rustup.rs -sSf | sh)
+
+ensure_cargo () {
+    if ask_to_install_if_not_found cargo
+    then
+        (curl https://sh.rustup.rs -sSf | sh) || error_and_exit "Could not install cargo"
+    fi
+}
 
 command=$1
 shift || return 0
@@ -13,6 +19,7 @@ case "$command" in
         ;;
 
     install|sync)
+        ensure_cargo
         packages=$(printf '%s\n' "$@" | sort | uniq)
         already_installed=$(cargo install --list \
                                 | awk 'NF==3{{match($3,"\\(([^#]*).*\\):",a)}print a[1]}NF==2{print $1}' \
@@ -31,10 +38,12 @@ case "$command" in
         ;;
 
     uninstall)
+        ensure_cargo
         cargo uninstall "$@"
         ;;
 
     update)
+        ensure_cargo
         export TMPDIR=$XDG_RUNTIME_DIR
         if command -v rustup
         then

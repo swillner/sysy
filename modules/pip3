@@ -5,8 +5,18 @@ set -e
 [[ -n "$sysypython" ]] || sysypython=python3
 
 PATH=$PATH:$HOME/.local/bin
-ask_to_install_if_not_found "$sysypython" && sudo apt-get install "$sysypython"
-ask_to_install_if_not_found "$sysypip" && (curl -s https://bootstrap.pypa.io/get-pip.py | "$sysypython" - --user)
+
+ensure_python () {
+    if ask_to_install_if_not_found "$sysypython"
+    then
+        sudo apt-get install "$sysypython" || error_and_exit "Could not install $sysypython"
+    fi
+
+    if ask_to_install_if_not_found "$sysypip"
+    then
+        (curl -s https://bootstrap.pypa.io/get-pip.py | "$sysypython" - --user) || error_and_exit "Could not install $sysypip"
+    fi
+}
 
 command=$1
 shift || return 0
@@ -17,19 +27,21 @@ case "$command" in
         ;;
 
     install)
+        ensure_python
         export TMPDIR=$XDG_RUNTIME_DIR
         "$sysypip" install --user "$@"
         ;;
 
     sync)
+        ensure_python
         declare -A packages
         for package in "$@"
         do
             key=$(sed 's/^git+[a-zA-Z0-9.:\/_\-]*\/\([^\/@]*\)\(@.*\)\?$/\1/g' <<< "$package" \
-                                       | sed 's/^\(.*\)\.git$/\1/g' \
-                                       | sed 's/[-_.]/-/g' \
-                                       | sed 's/\[.*\]//g' \
-                                       | tr '[:upper:]' '[:lower:]')
+                      | sed 's/^\(.*\)\.git$/\1/g' \
+                      | sed 's/[-_.]/-/g' \
+                      | sed 's/\[.*\]//g' \
+                      | tr '[:upper:]' '[:lower:]')
             packages[${key}]=$package
         done
         already_installed=$("$sysypip" list \
@@ -57,10 +69,12 @@ case "$command" in
         ;;
 
     uninstall)
+        ensure_python
         "$sysypip" uninstall "$@"
         ;;
 
     update)
+        ensure_python
         export TMPDIR=$XDG_RUNTIME_DIR
         "$sysypip" install --user --upgrade "$@"
         ;;
