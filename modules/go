@@ -66,7 +66,7 @@ case "$command" in
 
     update)
         ensure_go
-        go get -u "$@"
+        go get -v -u "$@"
         ;;
 
     *)
