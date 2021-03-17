@@ -99,7 +99,7 @@ case "$command" in
                 do
                     if [[ -e "$local_file" ]]
                     then
-                        relative_local_file=$(realpath --relative-to "$filespath" "$local_file")
+                        relative_local_file=$(realpath --no-symlinks --relative-to "$filespath" "$local_file")
                         file=$HOME/.$relative_local_file
                         # make sure to use the tag with the highest priority (unless it is a subfolder to be linked)
                         [[ -e "$local_file/.sub" ]] || local_file=$tagspath/$(find_local_file_tag "$relative_local_file")/dotfiles/$relative_local_file
