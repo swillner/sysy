@@ -38,23 +38,35 @@ find_local_file_tag () {
             fi
         fi
     done < <(tac "$tagsfile") # read reversely to prioritize later tags in file
+    echo "could not find tag for $local_file" >&2
+    exit 1
 }
 
 sync_file () {
     local local_file=$1
     local file=$2
+    local tag=$3
     [[ -e "$local_file" ]] || error_and_exit "$local_file not found"
     local_file=$(realpath "$local_file")
     if [[ -d "$local_file" && -e "$local_file/.sub" ]]
     then
         [[ ! -L "$file" ]] || error_and_exit "$file is a link"
         mkdir -p "$file"
+        local relative_local_file
+        relative_local_file=$(realpath --no-symlinks --relative-to "$tagspath/$tag/dotfiles" "$local_file")
         for f in "$local_file"/*
         do
             base=$(basename "$f")
             if [[ "$base" != ".sub" ]]
             then
-                sync_file "$f" "$file/$base"
+                local use_tag=$tag
+                local use_file="$f"
+                if ! [[ -e "$f.sub" ]]
+                then
+                    use_tag=$(find_local_file_tag "$relative_local_file/$base")
+                    use_file=$tagspath/$use_tag/dotfiles/$relative_local_file/$base
+                fi
+                sync_file "$use_file" "$file/$base" "$use_tag"
             fi
         done
     else
@@ -102,8 +114,13 @@ case "$command" in
                         relative_local_file=$(realpath --no-symlinks --relative-to "$filespath" "$local_file")
                         file=$HOME/.$relative_local_file
                         # make sure to use the tag with the highest priority (unless it is a subfolder to be linked)
-                        [[ -e "$local_file/.sub" ]] || local_file=$tagspath/$(find_local_file_tag "$relative_local_file")/dotfiles/$relative_local_file
-                        sync_file "$local_file" "$file"
+                        use_tag=$tag
+                        if ! [[ -e "$local_file/.sub" ]]
+                        then
+                            use_tag=$(find_local_file_tag "$relative_local_file")
+                            local_file=$tagspath/$use_tag/dotfiles/$relative_local_file
+                        fi
+                        sync_file "$local_file" "$file" "$use_tag"
                     fi
                 done
                 custompath=$tagspath/$tag/custom
@@ -117,7 +134,7 @@ case "$command" in
                         custom_file=${args[0]}
                         file=${args[1]}
                         [[ "${file:0:1}" == "/" ]] || file=$HOME/$file
-                        sync_file "$filespath/$custom_file" "$file"
+                        sync_file "$filespath/$custom_file" "$file" "$tag"
                     done < "$custompath"
                 fi
             fi
