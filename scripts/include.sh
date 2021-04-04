@@ -151,11 +151,16 @@ ensure_link () {
 
 ask_to_install_if_not_found () {
     local command=$1
+    local message=$2
     if command -v "$command" >/dev/null 2>/dev/null
     then
         return 1
     else
         error "Could not find $command executable"
+        if [[ -n "$message" ]]
+        then
+            info "$message"
+        fi
         if ask_user "Install $command now?" "y"
         then
             info "Installing $command..."

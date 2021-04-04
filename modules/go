@@ -7,31 +7,62 @@ GVMPARENTPATH="$HOME/.local"
 # shellcheck source=/dev/null
 [[ -f "$GVMPARENTPATH/gvm/scripts/gvm" ]] && source "$GVMPARENTPATH/gvm/scripts/gvm"
 
-ensure_go () {
-    if ask_to_install_if_not_found go
+latest_go_version () {
+    gvm listall | sed -n 's/^ \+\(go[0-9]\+\.[0-9]\+\)$/\1/p' | sort --reverse --version-sort | head -n 1
+}
+
+install_go_version () {
+    local goversion=$1
+    local previous_goversion
+    previous_goversion=$(gvm list | sed -n 's/^=> \+\(.\+\)$/\1/p')
+    if [[ "$goversion" == "$previous_goversion" ]]
     then
-        export GVM_NO_UPDATE_PROFILE=1
-        bash <(curl -s -S -L https://raw.githubusercontent.com/moovweb/gvm/master/binscripts/gvm-installer) master "$GVMPARENTPATH"
-        # shellcheck source=/dev/null
-        source "$GVMPARENTPATH/gvm/scripts/gvm"
-        defaultversion="go1.13"
+        return
+    fi
+    if ask_user "Compile $goversion from source?" "y"
+    then
+        if [[ -z "$previous_goversion" ]]
+        then
+            gvm install "$goversion" --binary --name="${goversion}-tmp-binary"
+            gvm use "${goversion}-tmp-binary"
+        fi
+
+        GOROOT_BOOTSTRAP=$GOROOT gvm install "${goversion}"
+
+        if [[ -z "$previous_goversion" ]]
+        then
+            gvm uninstall "${goversion}-tmp-binary"
+        fi
+    else
+        gvm install "$goversion" --binary
+    fi
+    gvm use "$goversion" --default
+    if [[ "$goversion" == "go1.16" ]]
+    then
+        go env -w GO111MODULE=auto
+    fi
+    export GOPATH
+}
+
+ensure_go () {
+    if ask_to_install_if_not_found go "(would install go using gvm, which is installed first)"
+    then
+        if ! command -v gvm >/dev/null 2>/dev/null
+        then
+            export GVM_NO_UPDATE_PROFILE=1
+            bash <(curl -s -S -L https://raw.githubusercontent.com/moovweb/gvm/master/binscripts/gvm-installer) master "$GVMPARENTPATH"
+            # shellcheck source=/dev/null
+            source "$GVMPARENTPATH/gvm/scripts/gvm"
+        fi
+
+        defaultversion="$(latest_go_version)"
         goversion=$(get_response "Install go version:" "[$defaultversion]")
         if [[ -z "$goversion" ]]
         then
             goversion="$defaultversion"
         fi
-        if ask_user "Compile $goversion from source?" "y"
-        then
-            gvm install "$goversion" --binary --name="${goversion}-binary"
-            gvm use "${goversion}-binary"
-            export GOROOT_BOOTSTRAP=$GOROOT
-            gvm install "${goversion}"
-            gvm uninstall "${goversion}-binary"
-        else
-            gvm install "$goversion" --binary
-        fi
-        gvm use "$goversion" --default
-        export GOPATH
+
+        install_go_version "$goversion"
     fi || error_and_exit "Could not install go"
 }
 
@@ -66,7 +97,16 @@ case "$command" in
 
     update)
         ensure_go
+        if command -v gvm >/dev/null 2>/dev/null
+        then
+            install_go_version "$(latest_go_version)"
+        fi
         go get -v -u "$@"
+        if command -v gvm >/dev/null 2>/dev/null
+        then
+            info "Currently installed go versions (use 'gvm uninstall VERSION' to uninstall):"
+            gvm list
+        fi
         ;;
 
     *)
