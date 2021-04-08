@@ -136,10 +136,10 @@ case "$command" in
             shopt -s globstar nullglob
             while IFS= read -r tag
             do
-                if [[ -n "$tag" && -d "$tagspath/$tag" ]]
+                filespath=$tagspath/$tag/system
+                if [[ -n "$tag" && -d "$filespath" ]]
                 then
                     [[ $(whoami) == "root" ]] || exec sudo --preserve-env -- "$0" "$command" "$@"
-                    filespath=$tagspath/$tag/system
                     for local_file in "$filespath"/**
                     do
                         if [[ -f "$local_file" ]]
