@@ -127,13 +127,14 @@ ensure_link () {
             do
                 case $(get_response "$question" "[Y/n/d/c] (d=show diff, c=copy and then link)") in
                     [yY][eE][sS]|[yY]|'')
-                        rm "$to"
+                        rm -r "$to"
                         ln -s "$from" "$to"
                         break
                         ;;
                     [cC])
-                        cp -f "$real" "$from"
-                        rm "$to"
+                        rm -rf "$from"
+                        cp -r "$real" "$from"
+                        rm -r "$to"
                         ln -s "$from" "$to"
                         break
                         ;;
