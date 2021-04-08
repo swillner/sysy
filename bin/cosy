@@ -130,7 +130,6 @@ case "$command" in
         ;;
 
     sync)
-        [[ $(whoami) == "root" ]] || exec sudo --preserve-env -- "$0" "$command" "$@"
         system_file=$1
         if [[ -z "$system_file" ]]
         then
@@ -139,6 +138,7 @@ case "$command" in
             do
                 if [[ -n "$tag" && -d "$tagspath/$tag" ]]
                 then
+                    [[ $(whoami) == "root" ]] || exec sudo --preserve-env -- "$0" "$command" "$@"
                     filespath=$tagspath/$tag/system
                     for local_file in "$filespath"/**
                     do
@@ -153,6 +153,7 @@ case "$command" in
                 fi
             done < "$tagsfile"
         else
+            [[ $(whoami) == "root" ]] || exec sudo --preserve-env -- "$0" "$command" "$@"
             local_file=$(find_local_file "$system_file")
             sync_file "$local_file" "$system_file"
         fi
