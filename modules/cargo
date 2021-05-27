@@ -22,7 +22,7 @@ case "$command" in
         ensure_cargo
         packages=$(printf '%s\n' "$@" | sort | uniq)
         already_installed=$(cargo install --list \
-                                | awk 'NF==3{{match($3,"\\(([^#]*).*\\):",a)}print a[1]}NF==2{print $1}' \
+                                | sed -n -e 's/^\([^ ]\+\) [^ ]\+:$\|[^ ]\+ [^ ]\+ (\([^ #]\+\)[^ ]*):$/\1\2/p' \
                                 | sort)
         readarray -t missing < <(comm -23 <(echo "$packages") <(echo "$already_installed"))
         export TMPDIR=$XDG_RUNTIME_DIR
