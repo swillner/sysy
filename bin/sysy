@@ -3,8 +3,13 @@ set -e
 
 if ! (command -v realpath && command -v dirname) >/dev/null 2>/dev/null
 then
-    echo "Could not find realpath or dirname executable, trying to install..." 1>&2
-    sudo apt-get install coreutils
+    if ask_user "Could not find realpath or dirname executable. Try to install? (requires sudo)" "y"
+    then
+        sudo apt-get install coreutils
+    else
+        echo "Cannot proceed without realpath and dirname" 1>&2
+        exit 1
+    fi
 fi
 
 confdir=$HOME/.sysy.d
