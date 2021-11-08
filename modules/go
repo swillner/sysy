@@ -76,15 +76,15 @@ case "$command" in
 
     install)
         ensure_go
-        go get "$@"
+        go install "$@"
         ;;
 
     sync)
         ensure_go
-        packages=$(printf '%s\n' "$@" | sort | uniq)
-        already_installed=$(go list -f '{{if not .Standard}}{{.ImportPath}}{{end}}' all | sort |uniq)
-        readarray -t missing < <(comm -23 <(echo "$packages") <(echo "$already_installed"))
-        [[ "${#missing[@]}" == 0 ]] || go get "${missing[@]}"
+        for package in "$@"
+        do
+            go install "$package"
+        done
         ;;
 
     uninstall)
@@ -101,7 +101,10 @@ case "$command" in
         then
             install_go_version "$(latest_go_version)"
         fi
-        go get -v -u "$@"
+        for package in "$@"
+        do
+            go install -v "$package"
+        done
         if command -v gvm >/dev/null 2>/dev/null
         then
             info "Currently installed go versions (use 'gvm uninstall VERSION' to uninstall):"
