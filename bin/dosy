@@ -61,7 +61,7 @@ sync_file () {
             then
                 local use_tag=$tag
                 local use_file="$f"
-                if ! [[ -e "$f.sub" ]]
+                if ! [[ -e "$f/.sub" ]]
                 then
                     use_tag=$(find_local_file_tag "$relative_local_file/$base")
                     use_file=$tagspath/$use_tag/dotfiles/$relative_local_file/$base
