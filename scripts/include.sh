@@ -181,7 +181,15 @@ open_in_editor () {
         then
             $EDITOR "$@"
         else
-            nano "$@"
+            if command -v nano /dev/null 2>/dev/null
+            then
+                nano "$@"
+            elif command -v emacs /dev/null 2>/dev/null
+            then
+                emacs "$@"
+            else
+                vi "$@"
+            fi
         fi
     fi
 }
