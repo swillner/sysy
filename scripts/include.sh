@@ -173,23 +173,10 @@ ask_to_install_if_not_found () {
 }
 
 open_in_editor () {
-    if [[ -n "$VISUAL" ]]
-    then
-        $VISUAL "$@"
-    else
-        if [[ -n "$EDITOR" ]]
-        then
-            $EDITOR "$@"
-        else
-            if command -v nano /dev/null 2>/dev/null
-            then
-                nano "$@"
-            elif command -v emacs /dev/null 2>/dev/null
-            then
-                emacs "$@"
-            else
-                vi "$@"
-            fi
-        fi
-    fi
+    local use="nano"
+    [[ -z "$EDITOR" ]] || use=$EDITOR
+    [[ -z "$VISUAL" ]] || use=$VISUAL
+    command -v "$use" >/dev/null 2>/dev/null || use="emacs"
+    command -v "$use" >/dev/null 2>/dev/null || use="vi"
+    "$use" "$@"
 }
