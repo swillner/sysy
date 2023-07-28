@@ -76,14 +76,14 @@ case "$command" in
 
     install)
         ensure_go
-        go install "$@"
+        go install "$@" -modcacherw
         ;;
 
     sync)
         ensure_go
         for package in "$@"
         do
-            go install "$package"
+            go install "$package" -modcacherw
         done
         ;;
 
@@ -103,7 +103,7 @@ case "$command" in
         fi
         for package in "$@"
         do
-            go install -v "$package"
+            go install -v "$package" -modcacherw
         done
         if command -v gvm >/dev/null 2>/dev/null
         then
