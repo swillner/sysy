@@ -67,7 +67,12 @@ sync_file () {
             then
                 cat "$local_file" | sudo tee "$system_file" >/dev/null
             else
-                info "Skipped $system_file"
+                if ask_user "Update $local_file?" "y"
+                then
+                    cat "$system_file" | sudo tee "$local_file" >/dev/null
+                else
+                    info "Skipped $system_file"
+                fi
             fi
         fi
     else
