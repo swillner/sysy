@@ -1,0 +1,49 @@
+#!/usr/bin/env bash
+set -e
+
+ensure_flatpak () {
+    if ask_to_install_if_not_found flatpak
+    then
+        sudo apt-get install flatpak
+        flatpak remote-add --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo
+        flatpak override --user --filesystem=xdg-config/gtk-3.0:ro
+        flatpak override --user --env=XCURSOR_PATH=/run/host/share/icons:/app/share/icons
+    fi
+}
+
+command=$1
+shift || return 0
+case "$command" in
+
+    desc)
+        echo
+        ;;
+
+    install)
+        ensure_flatpak
+        flatpak install --noninteractive flathub "$@"
+        ;;
+
+    sync)
+        ensure_flatpak
+        for package in "$@"
+        do
+            flatpak install --noninteractive flathub "$package"
+        done
+        ;;
+
+    uninstall)
+        ensure_flatpak
+        flatpak uninstall "$@"
+        ;;
+
+    update)
+        ensure_flatpak
+        flatpak update
+        ;;
+
+    *)
+        error_and_exit "Module does not support this command"
+        ;;
+
+esac
