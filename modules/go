@@ -4,8 +4,15 @@ set -e
 export GOMAXPROCS=1
 GVMPARENTPATH="$HOME/.local"
 
-# shellcheck source=/dev/null
-[[ -f "$GVMPARENTPATH/gvm/scripts/gvm" ]] && source "$GVMPARENTPATH/gvm/scripts/gvm"
+if [[ -f "$GVMPARENTPATH/gvm/scripts/gvm" ]]
+then
+    # shellcheck source=/dev/null
+    if ! source "$GVMPARENTPATH/gvm/scripts/gvm"
+    then
+        echo "Error in: source $GVMPARENTPATH/gvm/scripts/gvm" >&2
+        exit 1
+    fi
+fi
 
 latest_go_version () {
     gvm listall | sed -n 's/^ \+\(go[0-9]\+\.[0-9]\+\)$/\1/p' | sort --reverse --version-sort | head -n 1
