@@ -54,11 +54,7 @@ case "$command" in
         if command -v deborphan >/dev/null 2>/dev/null
         then
             readarray -t to_remove < <(get_packages_to_remove "$packages")
-            if [[ "${#to_remove[@]}" -gt 0 ]]
-            then
-                readarray -t to_remove < <(sudo apt-get -qq -s purge "${to_remove[@]}" 2>/dev/null | cut -f2 -d ' ')
-                [[ "${#to_remove[@]}" == 0 ]] || sudo aptitude purge "${to_remove[@]}" || true
-            fi
+            [[ "${#to_remove[@]}" == 0 ]] || sudo aptitude purge "${to_remove[@]}" || true
         fi
         ;;
 
