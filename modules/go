@@ -56,6 +56,10 @@ ensure_go () {
     then
         if ! command -v gvm >/dev/null 2>/dev/null
         then
+            if ! command -v bison >/dev/null 2>/dev/null
+            then
+                error_and_exit "Please install bison first"
+            fi
             export GVM_NO_UPDATE_PROFILE=1
             bash <(curl -s -S -L https://raw.githubusercontent.com/moovweb/gvm/master/binscripts/gvm-installer) master "$GVMPARENTPATH"
             # shellcheck source=/dev/null
