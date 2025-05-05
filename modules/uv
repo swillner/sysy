@@ -1,0 +1,57 @@
+#!/usr/bin/env bash
+set -e
+
+ensure_uv () {
+    if ask_to_install_if_not_found uv
+    then
+        if ask_to_install_if_not_found pip3
+        then
+            if ask_to_install_if_not_found python3
+            then
+                sudo apt-get install python3 || error_and_exit "Could not install python3"
+            fi
+            (curl -s https://bootstrap.pypa.io/get-pip.py | python3 - --user) || error_and_exit "Could not install pip3"
+        fi
+        pip3 install --user uv
+    fi
+}
+
+command=$1
+shift || return 0
+case "$command" in
+
+    desc)
+        echo
+        ;;
+
+    install)
+        ensure_uv
+        for package in "$@"
+        do
+            uv tool install $package
+        done
+        ;;
+
+    sync)
+        ensure_uv
+        for package in "$@"
+        do
+            uv tool install $package
+        done
+        ;;
+
+    uninstall)
+        ensure_uv
+        uv tool uninstall "$@"
+        ;;
+
+    update)
+        ensure_uv
+        uv tool upgrade
+        ;;
+
+    *)
+        error_and_exit "Module does not support this command"
+        ;;
+
+esac

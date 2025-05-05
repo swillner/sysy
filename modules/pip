@@ -1,20 +1,17 @@
 #!/usr/bin/env bash
 set -e
 
-[[ -n "$sysypip" ]] || sysypip=pip3
-[[ -n "$sysypython" ]] || sysypython=python3
-
 PATH=$PATH:$HOME/.local/bin
 
 ensure_python () {
-    if ask_to_install_if_not_found "$sysypython"
+    if ask_to_install_if_not_found python3
     then
-        sudo apt-get install "$sysypython" || error_and_exit "Could not install $sysypython"
+        sudo apt-get install python3 || error_and_exit "Could not install python3"
     fi
 
-    if ask_to_install_if_not_found "$sysypip"
+    if ask_to_install_if_not_found pip3
     then
-        (curl -s https://bootstrap.pypa.io/get-pip.py | "$sysypython" - --user) || error_and_exit "Could not install $sysypip"
+        (curl -s https://bootstrap.pypa.io/get-pip.py | python3 - --user) || error_and_exit "Could not install pip3"
     fi
 }
 
@@ -29,7 +26,7 @@ case "$command" in
     install)
         ensure_python
         export TMPDIR=$XDG_RUNTIME_DIR
-        "$sysypip" install --user "$@"
+        pip3 install --user "$@"
         ;;
 
     sync)
@@ -45,7 +42,7 @@ case "$command" in
                       | tr '[:upper:]' '[:lower:]')
             packages[${key}]=$package
         done
-        already_installed=$("$sysypip" list \
+        already_installed=$(pip3 list \
                                 | tail -n +3 \
                                 | cut -d' ' -f1 \
                                 | sed 's/[-_.]/-/g' \
@@ -65,19 +62,19 @@ case "$command" in
                 to_install+=( "${packages[${package}]}" )
             done
             export TMPDIR=$XDG_RUNTIME_DIR
-            "$sysypip" install --user "${to_install[@]}"
+            pip3 install --user "${to_install[@]}"
         fi
         ;;
 
     uninstall)
         ensure_python
-        "$sysypip" uninstall "$@"
+        pip3 uninstall "$@"
         ;;
 
     update)
         ensure_python
         export TMPDIR=$XDG_RUNTIME_DIR
-        "$sysypip" install --user --upgrade "$@"
+        pip3 install --user --upgrade "$@"
         ;;
 
     *)

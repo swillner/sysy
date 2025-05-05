@@ -32,7 +32,7 @@ get_packages () {
             packagesfile=$tagspath/$tag/packages/$module
             if [[ -f "$packagesfile" ]]
             then
-                grep -v -e "^#" < "$packagesfile" | cut -f1 -d' ' | grep -v "^$" || true
+                cut -f1 -d'#' < "$packagesfile" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//' | grep -v "^$" || true
             fi
         fi
     done < "$tagsfile"
