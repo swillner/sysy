@@ -15,7 +15,7 @@ then
 fi
 
 latest_go_version () {
-    gvm listall | sed -n 's/^ \+\(go[0-9]\+\.[0-9]\+\)$/\1/p' | sort --reverse --version-sort | head -n 1
+    gvm listall | sed -n 's/^ \+\(go[0-9]\+\.[0-9]\+\(\.[0-9]\+\)\?\)$/\1/p' | sort --reverse --version-sort | head -n 1
 }
 
 install_go_version () {
