@@ -47,7 +47,10 @@ case "$command" in
 
     update)
         ensure_uv
-        uv tool upgrade
+        for package in "$@"
+        do
+            uv tool upgrade "${package##* }"
+        done
         ;;
 
     *)
