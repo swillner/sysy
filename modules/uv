@@ -20,7 +20,8 @@ case "$command" in
         ensure_uv
         for package in "$@"
         do
-            uv tool install "$package"
+            # shellcheck disable=SC2086
+            uv tool install $package
         done
         ;;
 
@@ -28,7 +29,8 @@ case "$command" in
         ensure_uv
         for package in "$@"
         do
-            uv tool install "$package"
+            # shellcheck disable=SC2086
+            uv tool install $package
         done
         ;;
 
