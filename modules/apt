@@ -12,7 +12,25 @@ get_packages_to_remove () {
 ensure_aptitude () {
     if ask_to_install_if_not_found aptitude
     then
-        sudo apt-get install aptitude
+        sudo apt-get install -y aptitude
+    fi
+}
+
+aptitude_install () {
+    if [[ -n "${ALWAYS_ANSWER:-}" ]]
+    then
+        sudo DEBIAN_FRONTEND=noninteractive aptitude -y install "$@"
+    else
+        sudo aptitude install "$@"
+    fi
+}
+
+aptitude_purge () {
+    if [[ -n "${ALWAYS_ANSWER:-}" ]]
+    then
+        sudo DEBIAN_FRONTEND=noninteractive aptitude -y purge "$@"
+    else
+        sudo aptitude purge "$@"
     fi
 }
 
@@ -35,7 +53,7 @@ case "$command" in
 
     install)
         ensure_aptitude
-        sudo aptitude install "$@"
+        aptitude_install "$@"
         ;;
 
     sync)
@@ -49,18 +67,18 @@ case "$command" in
             readarray -t not_found < <(comm -23 <(printf '%s\n' "${not_installed[@]}") <(echo "$available"))
             [[ "${#not_found[@]}" == 0 ]] || error "Packages not found: ${not_found[*]}"
             readarray -t to_install < <(comm -12 <(printf '%s\n' "${not_installed[@]}") <(echo "$available"))
-            [[ "${#to_install[@]}" == 0 ]] || sudo aptitude install "${to_install[@]}"
+            [[ "${#to_install[@]}" == 0 ]] || aptitude_install "${to_install[@]}"
         fi
         if command -v deborphan >/dev/null 2>/dev/null
         then
             readarray -t to_remove < <(get_packages_to_remove "$packages")
-            [[ "${#to_remove[@]}" == 0 ]] || sudo aptitude purge "${to_remove[@]}" || true
+            [[ "${#to_remove[@]}" == 0 ]] || aptitude_purge "${to_remove[@]}" || true
         fi
         ;;
 
     uninstall)
         ensure_aptitude
-        sudo aptitude purge "$@"
+        aptitude_purge "$@"
         ;;
 
     update)

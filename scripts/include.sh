@@ -28,6 +28,11 @@ fi
 
 show_diff () {
     ask_to_install_if_not_found "${nicediff[0]}" && sudo apt-get install diffutils
+    if [[ -n "${ALWAYS_ANSWER:-}" ]]
+    then
+        "${nicediff[@]}" "$1" "$2" || true
+        return
+    fi
     "${nicediff[@]}" "$1" "$2" | less -X -F
 }
 
@@ -58,7 +63,7 @@ get_response () {
     local question=$1
     local default_indicator=$2
     local response
-    if [[ -z "$ALWAYS_ANSWER" ]]
+    if [[ -z "${ALWAYS_ANSWER:-}" ]]
     then
         echo -e -n "$COLOR_ORANGE$question$COLOR_CLEAR $COLOR_LIGHT_GRAY$default_indicator$COLOR_CLEAR " > /dev/tty
         read -r response < /dev/tty
@@ -99,7 +104,7 @@ ask_run () {
     local cmd=$1
     local desc=$2
     [[ -z "$desc" ]] || desc=" ($desc)"
-    echo -e "${COLOR_ORANGE}Would run$desc\\n$COLOR_YELLOW  $cmd$COLOR_RESET"
+    echo -e "${COLOR_ORANGE}Would run$desc\\n$COLOR_YELLOW  $cmd$COLOR_CLEAR"
     if ask_user "Run?" "y"
     then
         eval "$cmd"

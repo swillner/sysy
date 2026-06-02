@@ -79,7 +79,12 @@ sync_file () {
         if is_text_file "$local_file"
         then
             info "New $system_file:"
-            less -X -F "$local_file"
+            if [[ -z "${ALWAYS_ANSWER:-}" ]]
+            then
+                less -X -F "$local_file"
+            else
+                cat "$local_file"
+            fi
         else
             info "New $system_file (binary)"
         fi

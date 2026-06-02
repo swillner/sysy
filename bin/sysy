@@ -28,7 +28,15 @@ case "$command" in
         mkdir -p "$confdir"
         ensure_link "$sysypath/bin" "$confdir/bin"
         touch "$confdir/tags"
-        ask_user "Edit tags now?" "y" && open_in_editor "$confdir/tags"
+        if [[ -z "${ALWAYS_ANSWER:-}" ]]
+        then
+            if [[ -s "$tagsfile" ]]
+            then
+                ask_user "Edit tags now?" "n" && open_in_editor "$confdir/tags"
+            else
+                ask_user "Edit tags now?" "y" && open_in_editor "$confdir/tags"
+            fi
+        fi
         info "Invoking pre-bootstrap scripts..."
         while IFS= read -r tag
         do
