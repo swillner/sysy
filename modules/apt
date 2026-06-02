@@ -23,7 +23,7 @@ case "$command" in
     desc)
         ensure_aptitude
         package=$1
-        desc=$(aptitude show "$package" | grep '^Description: ')
+        desc=$(aptitude show "$package" | grep '^Description: ' 2>/dev/null || true)
         echo "${desc:13:120}"
         ;;
 

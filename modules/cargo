@@ -30,9 +30,9 @@ case "$command" in
         do
             if [[ "$package" == https://* ]] || [[ "$package" == http://* ]]
             then
-                cargo install --git "$package"
+                cargo install --locked --git "$package"
             else
-                cargo install "$package"
+                cargo install --locked "$package"
             fi
         done
         ;;
