@@ -34,25 +34,25 @@ case "$command" in
         declare -A packages
         for package in "$@"
         do
-            key=$(sed 's/^git+[a-zA-Z0-9.:\/_\-]*\/\([^\/@]*\)\(@.*\)\?$/\1/g' <<< "$package" \
-                      | sed 's/^\(.*\)\.git$/\1/g' \
-                      | sed 's/^\(.*\)==.*$/\1/g' \
-                      | sed 's/[-_.]/-/g' \
-                      | sed 's/\[.*\]//g' \
-                      | tr '[:upper:]' '[:lower:]')
+            key=$(sed 's/^git+[a-zA-Z0-9.:\/_\-]*\/\([^\/@]*\)\(@.*\)\?$/\1/g' <<< "$package" |
+                      sed 's/^\(.*\)\.git$/\1/g' |
+                      sed 's/^\(.*\)==.*$/\1/g' |
+                      sed 's/[-_.]/-/g' |
+                      sed 's/\[.*\]//g' |
+                      tr '[:upper:]' '[:lower:]')
             packages[${key}]=$package
         done
-        already_installed=$(pip3 list \
-                                | tail -n +3 \
-                                | cut -d' ' -f1 \
-                                | sed 's/[-_.]/-/g' \
-                                | tr '[:upper:]' '[:lower:]' \
-                                | sort)
-        readarray -t missing < <(comm -23 <(\
-                                            echo "${!packages[*]}" \
-                                                | sed 's/ /\n/g' \
-                                                | sort \
-                                                | uniq \
+        already_installed=$(pip3 list |
+                                tail -n +3 |
+                                cut -d' ' -f1 |
+                                sed 's/[-_.]/-/g' |
+                                tr '[:upper:]' '[:lower:]' |
+                                sort)
+        readarray -t missing < <(comm -23 <(
+                                     echo "${!packages[*]}" |
+                                         sed 's/ /|n/g' |
+                                         sort |
+                                         uniq
                                  ) <(echo "$already_installed"))
         if [[ "${#missing[@]}" -gt 0 ]]
         then

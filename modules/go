@@ -92,9 +92,16 @@ case "$command" in
 
     sync)
         ensure_go
+        declare -A packages
         for package in "$@"
         do
-            go install -modcacherw "$package"
+            packages[${package%@*}]=$package
+        done
+        already_installed=$(go version -m "$(go env GOPATH)" 2>/dev/null | awk '$1 == "path" { print $2 }' | sort)
+        readarray -t missing < <(comm -23 <(printf '%s\n' "${!packages[@]}" | sort) <(echo "$already_installed"))
+        for package in "${missing[@]}"
+        do
+            go install -modcacherw "${packages[${package}]}"
         done
         ;;
 

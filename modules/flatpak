@@ -26,10 +26,10 @@ case "$command" in
 
     sync)
         ensure_flatpak
-        for package in "$@"
-        do
-            flatpak install --noninteractive flathub "$package"
-        done
+        packages=$(printf '%s\n' "$@" | sort | uniq)
+        already_installed=$(flatpak list --app --columns=application | sort)
+        readarray -t missing < <(comm -23 <(echo "$packages") <(echo "$already_installed"))
+        [[ "${#missing[@]}" == 0 ]] || flatpak install --noninteractive flathub "${missing[@]}"
         ;;
 
     uninstall)

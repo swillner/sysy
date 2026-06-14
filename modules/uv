@@ -8,6 +8,16 @@ ensure_uv () {
     fi
 }
 
+tool_name () {
+    local package=$1
+    package=${package##* }
+    sed -E 's/(\[|[=<>!~]).*$//' <<< "$package"
+}
+
+list_installed_tools () {
+    uv tool list | awk '/^[^[:space:]]/ { print $1 }' | sort
+}
+
 command=$1
 shift || return 0
 case "$command" in
@@ -27,10 +37,17 @@ case "$command" in
 
     sync)
         ensure_uv
+        declare -A packages
         for package in "$@"
         do
+            packages[$(tool_name "$package")]=$package
+        done
+        already_installed=$(list_installed_tools)
+        readarray -t missing < <(comm -23 <(printf '%s\n' "${!packages[@]}" | sort) <(echo "$already_installed"))
+        for package in "${missing[@]}"
+        do
             # shellcheck disable=SC2086
-            uv tool install $package
+            uv tool install ${packages[${package}]}
         done
         ;;
 

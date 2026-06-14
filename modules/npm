@@ -8,35 +8,85 @@ ensure_npm () {
     fi
 }
 
-command=$1
-shift || return 0
+select_package_manager () {
+    if command -v pnpm >/dev/null 2>/dev/null
+    then
+        package_manager=pnpm
+    else
+        ensure_npm
+        package_manager=npm
+    fi
+}
+
+ensure_jq () {
+    if ask_to_install_if_not_found jq
+    then
+        sudo apt-get install jq || error_and_exit "Could not install jq"
+    fi
+}
+
+install_global () {
+    if [[ "$package_manager" == pnpm ]]
+    then
+        pnpm add -g "$@"
+    else
+        npm install -g "$@"
+    fi
+}
+
+uninstall_global () {
+    if [[ "$package_manager" == pnpm ]]
+    then
+        pnpm remove -g "$@"
+    else
+        npm uninstall -g "$@"
+    fi
+}
+
+list_installed_packages () {
+    ensure_jq
+    "$package_manager" list -g --depth 0 --json |
+        jq -r 'if type == "array" then .[0].dependencies // {} else .dependencies // {} end | keys[]' |
+        sort
+}
+
+command=${1:-bootstrap}
+[[ "$#" -eq 0 ]] || shift
 case "$command" in
+
+    bootstrap)
+        ensure_npm
+        if ask_to_install_if_not_found pnpm
+        then
+            npm install -g pnpm || error_and_exit "Could not install pnpm"
+        fi
+        ;;
 
     desc)
         echo
         ;;
 
     install)
-        ensure_npm
-        npm install -g "$@"
+        select_package_manager
+        install_global "$@"
         ;;
 
     sync)
-        ensure_npm
+        select_package_manager
         packages=$(printf '%s\n' "$@" | sort | uniq)
-        already_installed=$(find "$(npm root -g)" -maxdepth 1 -mindepth 1 -type d -printf '%P\n' | sort)
+        already_installed=$(list_installed_packages)
         readarray -t missing < <(comm -23 <(echo "$packages") <(echo "$already_installed"))
-        [[ "${#missing[@]}" == 0 ]] || npm install -g "${missing[@]}"
+        [[ "${#missing[@]}" == 0 ]] || install_global "${missing[@]}"
         ;;
 
     uninstall)
-        ensure_npm
-        npm uninstall -g "$@"
+        select_package_manager
+        uninstall_global "$@"
         ;;
 
     update)
-        ensure_npm
-        npm update -g "$@"
+        select_package_manager
+        "$package_manager" update -g "$@"
         ;;
 
     *)
