@@ -25,8 +25,7 @@ case "$command" in
 
     desc)
         package=$1
-        desc=$(apt-cache show "$package" | grep -m1 '^Description: ' 2>/dev/null || true)
-        echo "${desc:13:120}"
+        apt-cache show "$package" 2>/dev/null | sed -nE '/^Description(-en)?: /{s///;p;q}'
         ;;
 
     diff)
