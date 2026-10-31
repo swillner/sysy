@@ -26,7 +26,7 @@ install_go_version () {
     then
         return
     fi
-    if ask_user "Compile $goversion from source?" "y"
+    if ask_user "Compile $goversion from source?" "n"
     then
         if [[ -z "$previous_goversion" ]]
         then

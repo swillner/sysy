@@ -50,7 +50,7 @@ case "$command" in
             rustup update
         fi
         # requires cargo-update crate
-        cargo install-update -a
+        cargo install-update -a --locked
         ;;
 
     *)
